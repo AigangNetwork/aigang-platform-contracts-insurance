@@ -9,7 +9,7 @@ contract IProduct {
     function addClaim() public;
 }
 
-contract Ptoduct is Owned, IProduct {
+contract Product is Owned, IProduct {
     uint public fee;
     address public token;
     IPremiumCalculator public premiumCalculator;
@@ -35,7 +35,7 @@ contract Ptoduct is Owned, IProduct {
         uint premium;
         uint payout; // TODO: decide payout configuration
         uint32 IPFSHash;
-    };
+    }
     
     struct Claim {
         uint policyId;
@@ -50,17 +50,17 @@ contract Ptoduct is Owned, IProduct {
         premiumCalculator = IPremiumCalculator(_premiumCalculator);
         fee = _fee;
         paused = false;
-    };
+    }
     
-    function addPolicy() public onlyOwner {
-        emit Policy;
-    };
+    // function addPolicy() public onlyOwner {
+    //     emit Policy;
+    // }
     
-    function addClaim() public onlyOwner {
-        emit Claim;
-    };
+    // function addClaim() public onlyOwner {
+    //     emit Claim
+    // }
     
-    event Policy(uint indexed _policyId, address indexed _owner, uint _amount);
-    event Claim(uint indexed _policyId, address indexed _owner, uint _amount);    
-    event PremiumCalculatorChanged(address _old, address _new); 
+    // event Policy(uint indexed _policyId, address indexed _owner, uint _amount);
+    // event Claim(uint indexed _policyId, address indexed _owner, uint _amount);    
+    // event PremiumCalculatorChanged(address _old, address _new); 
 }

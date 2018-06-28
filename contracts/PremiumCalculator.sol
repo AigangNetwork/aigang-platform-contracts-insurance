@@ -5,7 +5,7 @@ import "./utils/SafeMath.sol";
 
 contract IPremiumCalculator {
     function calculatePremium(
-        uint _batteryDesignCapasity, 
+        uint _batteryDesignCapacity, 
         uint _currentChargeLevel,
         uint _deviceAgeInMonths,
         uint _totalCpuUsage,
@@ -15,7 +15,7 @@ contract IPremiumCalculator {
     ) public view returns (uint);
     
     function isClaimable(
-        string _batteryWearLevel
+        uint _batteryWearLevel
     ) public view returns (bool);
 }
 
@@ -44,7 +44,6 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
     using SafeMath for uint;
 
     function calculatePremium(
-        uint _batteryDesignCapasity, // TODO: implement
         uint _currentChargeLevel,
         uint _deviceAgeInMonths,
         uint _totalCpuUsage,
@@ -52,14 +51,15 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         string _deviceBrand,
         string _batteryWearLevel) public view returns (uint) {
        
+        // coefficients are multiplied x1000000 is due to Solidity not supporting doubles
         uint c1 = getCoefficientMultiplier(_deviceBrand, _region, _batteryWearLevel);
        
         uint c2 = getIntervalCoefficientMultiplier(_currentChargeLevel, _deviceAgeInMonths, _totalCpuUsage);
 
-        // / 100 is due to Solidity not supporting doubles
-        uint riskPremium = basePremium  * c1 * c2;                                     
+        uint riskPremium = basePremium * c1 * c2;
 
-        uint officePremium = riskPremium / (100 - loading) * 100; 
+        // 1000000000000 is due to each cofficient multiplied by 100
+        uint officePremium = riskPremium * (100 - loading) / 100000000000000; 
         
         return officePremium;
     }
@@ -75,11 +75,11 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         coefficientIntervals[CHARGE_LEVEL].push(Interval(30, 100, 100));
     
         // DEVICE BRAND
-        coefficients[DEVICE_BRAND]['huawei'] = 100;
-        coefficients[DEVICE_BRAND]['samsung'] = 100;
-        coefficients[DEVICE_BRAND]['xiaomi'] = 100;
-        coefficients[DEVICE_BRAND]['oppo'] = 105;
-        coefficients[DEVICE_BRAND]['vivo'] = 105;
+        coefficients[DEVICE_BRAND]["huawei"] = 100;
+        coefficients[DEVICE_BRAND]["samsung"] = 100;
+        coefficients[DEVICE_BRAND]["xiaomi"] = 100;
+        coefficients[DEVICE_BRAND]["oppo"] = 105;
+        coefficients[DEVICE_BRAND]["vivo"] = 105;
         coefficients[DEVICE_BRAND][DEFAULT] = 110;
 
         // DEVICE AGE IN MONTHS
@@ -158,20 +158,21 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
             batteryWearLevelMultiplier = coefficients[WEAR_LEVEL][_batteryWearLevel];
         }
 
-        result = deviceBrandMultiplier / 100
-                    * regionMultiplier / 100 
-                    * batteryWearLevelMultiplier / 100;
+        
+        result = deviceBrandMultiplier 
+                    * regionMultiplier
+                    * batteryWearLevelMultiplier;
     }
 
-    function getIntervalCoefficientMultiplier(uint _currentChargeLevel, uint _deviceAgeInMonths, uint _totalCpuUsage) public view returns (uint result) {
+    function getIntervalCoefficientMultiplier(uint _currentChargeLevel, uint _deviceAgeInMonths, uint _totalCpuUsage)
+    public view returns (uint result) {
         uint totalCpuUsageMultiplier = getCoefficient(CPU_USAGE, _totalCpuUsage); 
         uint chargeLevelMultiplier = getCoefficient(CHARGE_LEVEL, _currentChargeLevel); 
         uint deviceAgeInMonthsMultiplier = getCoefficient(DEVICE_AGE, _deviceAgeInMonths); 
 
-        result = totalCpuUsageMultiplier / 100
-                    * chargeLevelMultiplier / 100
-                    * deviceAgeInMonthsMultiplier / 100;
-
+        result = totalCpuUsageMultiplier
+                    * chargeLevelMultiplier
+                    * deviceAgeInMonthsMultiplier;
     }
 
     function getCoefficient(bytes2 _type, uint _value) public view returns (uint result) {
@@ -183,9 +184,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         }
     }
 
-    function isClaimable(
-        uint _batteryWearLevel
-    ) public view returns (bool) {
+    function isClaimable() public pure returns (bool) {
 
         return false; // TODO:
     }
