@@ -1,9 +1,9 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
 import "./utils/Owned.sol";
 import "./utils/SafeMath.sol";
 
-contract IPremiumCalculator {
+interface IPremiumCalculator {
     function calculatePremium(
         uint _batteryDesignCapacity, 
         uint _currentChargeLevel,
@@ -12,11 +12,11 @@ contract IPremiumCalculator {
         string _region,
         string _deviceBrand,
         string _batteryWearLevel
-    ) public view returns (uint);
+    ) external view returns (uint);
     
-    function isClaimable(
-        uint _batteryWearLevel
-    ) public view returns (bool);
+    // function isClaimable(
+    //     uint _batteryWearLevel
+    // ) external view returns (bool);
 }
 
 
@@ -44,12 +44,13 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
     using SafeMath for uint;
 
     function calculatePremium(
+        uint _batteryDesignCapacity, 
         uint _currentChargeLevel,
         uint _deviceAgeInMonths,
         uint _totalCpuUsage,
         string _region,
         string _deviceBrand,
-        string _batteryWearLevel) public view returns (uint) {
+        string _batteryWearLevel) external view returns (uint) {
        
         // coefficients are multiplied x1000000 is due to Solidity not supporting doubles
         uint c1 = getCoefficientMultiplier(_deviceBrand, _region, _batteryWearLevel);

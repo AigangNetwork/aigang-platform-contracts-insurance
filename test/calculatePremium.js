@@ -2,7 +2,7 @@ var PremiumCalculator = artifacts.require('./PremiumCalculator.sol')
 
 contract('PremiumCalculator', function(accounts) {
   it('...should calculate minimum possible premium', async function() {
-    const PremiumCalculatorInstance = await PremiumCalculator.deployed()
+    const PremiumCalculatorInstance = await PremiumCalculator.new()
 
     const basePremium = 0.000001
     const basePremiumInWei = web3.toWei(basePremium, 'ether')
@@ -10,7 +10,7 @@ contract('PremiumCalculator', function(accounts) {
 
     await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, { from: accounts[0] })
 
-    const batteryDesignCapacity = 70 // not implemented
+    const batteryDesignCapacity = 4000 // not implemented
     const currentChargeLevel = 40 // 1
     const deviceAgeInMonths = 1 // 0.9
     const totalCpuUsage = 5 // 0.95
@@ -38,7 +38,7 @@ contract('PremiumCalculator', function(accounts) {
   })
 
   it('...should calculate maximum possible premium', async function() {
-    const PremiumCalculatorInstance = await PremiumCalculator.deployed()
+    const PremiumCalculatorInstance = await PremiumCalculator.new()
 
     const basePremium = 999999.999999
     const basePremiumInWei = web3.toWei(basePremium, 'ether')
@@ -46,7 +46,7 @@ contract('PremiumCalculator', function(accounts) {
 
     await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, { from: accounts[0] })
 
-    const batteryDesignCapacity = 70 // not implemented
+    const batteryDesignCapacity = 4000 // not implemented
     const currentChargeLevel = 5 // 1.2
     const deviceAgeInMonths = 71 // 1.2
     const totalCpuUsage = 99 // 1.1
