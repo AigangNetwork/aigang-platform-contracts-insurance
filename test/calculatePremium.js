@@ -10,7 +10,7 @@ contract('PremiumCalculator', function(accounts) {
 
     await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, { from: accounts[0] })
 
-    const batteryDesignCapacity = 70 // not implemented
+    // const batteryDesignCapacity = 70 // not implemented
     const currentChargeLevel = 40 // 1
     const deviceAgeInMonths = 1 // 0.9
     const totalCpuUsage = 5 // 0.95
@@ -22,7 +22,7 @@ contract('PremiumCalculator', function(accounts) {
     // premium - loading = 0.000000855 * 0.01 = 0.00000000855
 
     const premiumInWei = await PremiumCalculatorInstance.calculatePremium(
-      batteryDesignCapacity,
+      // batteryDesignCapacity,
       currentChargeLevel,
       deviceAgeInMonths,
       totalCpuUsage,
@@ -46,7 +46,7 @@ contract('PremiumCalculator', function(accounts) {
 
     await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, { from: accounts[0] })
 
-    const batteryDesignCapacity = 70 // not implemented
+    // const batteryDesignCapacity = 70 // not implemented
     const currentChargeLevel = 5 // 1.2
     const deviceAgeInMonths = 71 // 1.2
     const totalCpuUsage = 99 // 1.1
@@ -58,7 +58,7 @@ contract('PremiumCalculator', function(accounts) {
     // premium - loading = 1742399.9999982576 * 0.99 = 1724975.999998275024
 
     const premiumInWei = await PremiumCalculatorInstance.calculatePremium(
-      batteryDesignCapacity,
+      // batteryDesignCapacity,
       currentChargeLevel,
       deviceAgeInMonths,
       totalCpuUsage,

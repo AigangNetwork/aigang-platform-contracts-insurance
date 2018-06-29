@@ -5,7 +5,6 @@ import "./utils/SafeMath.sol";
 
 contract IPremiumCalculator {
     function calculatePremium(
-        uint _batteryDesignCapacity, 
         uint _currentChargeLevel,
         uint _deviceAgeInMonths,
         uint _totalCpuUsage,
@@ -15,8 +14,7 @@ contract IPremiumCalculator {
     ) public view returns (uint);
     
     function isClaimable(
-        uint _batteryWearLevel
-    ) public view returns (bool);
+    ) public pure returns (bool);
 }
 
 
