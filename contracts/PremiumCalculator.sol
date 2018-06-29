@@ -5,6 +5,7 @@ import "./utils/SafeMath.sol";
 
 interface IPremiumCalculator {
     function calculatePremium(
+        uint _batteryDesignCapacity,
         uint _currentChargeLevel,
         uint _deviceAgeInMonths,
         uint _totalCpuUsage,
@@ -14,7 +15,7 @@ interface IPremiumCalculator {
     ) external view returns (uint);
     
     function isClaimable(
-    ) public pure returns (bool);
+    ) external pure returns (bool);
 }
 
 

@@ -1,0 +1,26 @@
+{
+  "name": "aigang-platform-contracts-insurance",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "eth-gas-reporter": "^0.1.9"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AigangNetwork/aigang-platform-contracts-insurance.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AigangNetwork/aigang-platform-contracts-insurance/issues"
+  },
+  "homepage": "https://github.com/AigangNetwork/aigang-platform-contracts-insurance#readme"
+}
