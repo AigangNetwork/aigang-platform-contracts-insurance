@@ -5,12 +5,12 @@ module.exports = {
       port: 7545,
       network_id: '*'
     }
-  },
-  mocha: {
-    reporter: 'eth-gas-reporter',
-    reporterOptions: {
-      currency: 'EUR',
-      gasPrice: 1
-    }
   }
+  // , mocha: {
+  //   reporter: 'eth-gas-reporter',
+  //   reporterOptions: {
+  //     currency: 'EUR',
+  //     gasPrice: 1
+  //   }
+  // }
 }

@@ -5,9 +5,9 @@ import "./utils/SafeMath.sol";
 import "./interfaces/IERC20.sol";
 //import "./PremiumCalculator.sol";
 
-contract IProduct {
-    function addPolicy() public;
-    function addClaim() public;
+interface IProduct {
+    function addPolicy(bytes32 _id, address _owner, uint _utcStart, uint _utcEnd, uint _premium, uint _calculatedPayOut, uint ipfsHash) external;
+    function claim(bytes32 _policyId, uint ipfsHash) external;
 }
 
 contract Product is Owned, IProduct {
