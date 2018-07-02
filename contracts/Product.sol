@@ -2,23 +2,26 @@ pragma solidity ^0.4.23;
 
 import "./utils/OwnedwithExecutor.sol";
 import "./utils/SafeMath.sol";
+import "./utils/BytesHelper.sol";
 import "./interfaces/IERC20.sol";
 //import "./PremiumCalculator.sol";
 
 interface IProduct {
-    function addPolicy(bytes32 _id, address _owner, uint _utcStart, uint _utcEnd, uint _premium, uint _calculatedPayOut, uint ipfsHash) external;
+    function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayOut, uint ipfsHash) external;
     function claim(bytes32 _policyId, uint ipfsHash) external;
 }
 
 contract Product is Owned, IProduct {
     using SafeMath for uint;
+    using BytesHelper for bytes;
 
-    event PolicyAdd(bytes32 indexed _policyId, uint _amount);
+    event PolicyAdd(bytes32 indexed _policyId);
     event Claim(bytes32 indexed _policyId, uint _amount);    
     event Cancel(bytes32 indexed _policyId, uint _amount);    
     event PremiumCalculatorChange(address _old, address _new);
+    event PaymentReceived(bytes32 indexed _policyId, uint _amount);
 
-    // TODO: limit policies ar payouts amoun or others limits in code not contracts.    
+    // TODO: limit policies or payouts amoun or others limits in code not contracts.    
     struct Policy {
         address owner;
         uint utcStart;
@@ -58,6 +61,11 @@ contract Product is Owned, IProduct {
         _;
     }
 
+    modifier senderIsToken() {
+        require(msg.sender == address(token));
+        _;
+    }
+
      modifier policyValidForPayOut(bytes32 _policyId) {
         require(policies[_policyId].owner != address(0), "Owner is not valid");       
         require(policies[_policyId].payOut == 0, "PayOut already done");
@@ -72,19 +80,32 @@ contract Product is Owned, IProduct {
         paused = false;
     }
 
-    function addPolicy(bytes32 _id, address _owner, uint _utcStart, uint _utcEnd, uint _premium, uint _calculatedPayOut, uint ipfsHash) public onlyAllowed notPaused {
-        require(_owner != address(0), "Owner is not valid");
-
-        policies[_id].owner = _owner;
+    function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayOut, uint ipfsHash) public onlyAllowed notPaused {
         policies[_id].utcStart = _utcStart;
         policies[_id].utcEnd = _utcEnd;
-        policies[_id].premium = _premium;
         policies[_id].calculatedPayOut = _calculatedPayOut;
 
         policiesCount++;
         policiesTotalCalculatedPayOuts = policiesTotalCalculatedPayOuts.add(_calculatedPayOut);
 
-        emit PolicyAdd(_id, _premium);
+        emit PolicyAdd(_id);
+    }
+
+    /// Called by token contract after Approval: this.TokenInstance.methods.approveAndCall()
+    function receiveApproval(address _from, uint _amountOfTokens, address _token, bytes _data) 
+            external 
+            senderIsToken
+            notPaused {
+        require(_amountOfTokens > 0, "amount should be > 0");
+        bytes32 policyId = _data.bytesToBytes32();
+
+        require(policies[policyId].owner != address(0), "not valid policyId");
+        require(policies[policyId].premium == 0, "not valid policyId");
+   
+        policies[policyId].premium = _amountOfTokens;
+        policies[policyId].owner = _from;
+
+        emit PaymentReceived(policyId, _amountOfTokens);
     }
           
     function claim(bytes32 _policyId, uint ipfsHash) public 
@@ -138,6 +159,11 @@ contract Product is Owned, IProduct {
     function () public payable {
         require(false);
     }
+
+   function tokenBalance() public view returns (uint) {
+         return IERC20(token).balanceOf(this);
+    }
+
 
     function withdrawETH() external onlyOwner {
         owner.transfer(address(this).balance);

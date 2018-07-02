@@ -95,22 +95,20 @@ contract('Product', accounts => {
       })
     })
 
-    it('happy flow', async function() {
-      let id = 'productID1'
-      let p_owner = addresses[0]
-      let start = Date.now()
-      let end = start + 100
-      let premium = web3.toWei(1.2, 'ether')
-      let calculatedPayOut = web3.toWei(1.6, 'ether')
-      let ipfsHash = 1
+    // it('happy flow', async function() {
+    //   let id = 'productID1'
+    //   let p_owner = addresses[0]
+    //   let start = Date.now()
+    //   let end = start + 100
+    //   let premium = web3.toWei(1.2, 'ether')
+    //   let calculatedPayOut = web3.toWei(1.6, 'ether')
+    //   let ipfsHash = 1
 
-      //testTokenInstance = await TestToken.new()
+    //   await productInstance.addPolicy(id, p_owner, start, end, premium, calculatedPayOut, ipfsHash, { from: owner })
 
-      await productInstance.addPolicy(id, p_owner, start, end, premium, calculatedPayOut, ipfsHash, { from: owner })
+    //   let policiesCount = await productInstance.policiesCount({ from: owner })
 
-      let policiesCount = await productInstance.policiesCount({ from: owner })
-
-      assert.equal(policiesCount, 1)
-    })
+    //   assert.equal(policiesCount, 1)
+    // })
   })
 })

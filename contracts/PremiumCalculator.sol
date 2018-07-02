@@ -13,6 +13,18 @@ interface IPremiumCalculator {
         string _deviceBrand,
         string _batteryWearLevel
     ) external view returns (uint);
+
+    function validate(
+        uint _batteryDesignCapacity, 
+        uint _currentChargeLevel,
+        uint _deviceAgeInMonths,
+        uint _totalCpuUsage,
+        string _region,
+        string _deviceBrand,
+        string _batteryWearLevel) 
+            external 
+            view 
+            returns (bytes2);
     
     function isClaimable(
     ) external pure returns (bool);
@@ -31,14 +43,19 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
 
     mapping (bytes2 => mapping(string => uint) ) coefficients;
     mapping (bytes2 => Interval[]) coefficientIntervals;
+    uint constant TOTAL_COEFFICIENTS = 7;
    
     string constant DEFAULT = "default";
+    bytes2 constant DESIGN_CAPACITY = "DC";  
     bytes2 constant CHARGE_LEVEL = "CL";  
-    bytes2 constant DEVICE_BRAND = "DB";
     bytes2 constant DEVICE_AGE = "DA"; // in months
     bytes2 constant CPU_USAGE = "CU";
+
     bytes2 constant REGION = "R";
+    bytes2 constant DEVICE_BRAND = "DB";
     bytes2 constant WEAR_LEVEL = "WL";
+
+    bytes2[] public notValid;
     
     using SafeMath for uint;
 
@@ -49,24 +66,69 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         uint _totalCpuUsage,
         string _region,
         string _deviceBrand,
-        string _batteryWearLevel) external view returns (uint) {
-       
-        // coefficients are multiplied x1000000 is due to Solidity not supporting doubles
-        uint c1 = getCoefficientMultiplier(_deviceBrand, _region, _batteryWearLevel);
-       
-        uint c2 = getIntervalCoefficientMultiplier(_currentChargeLevel, _deviceAgeInMonths, _totalCpuUsage);
-
-        uint riskPremium = basePremium * c1 * c2;
-
-        // 1000000000000 is due to each cofficient multiplied by 100
-        uint officePremium = riskPremium * (100 - loading) / 100000000000000; 
+        string _batteryWearLevel) external view returns (uint premium) {
         
-        return officePremium;
+        uint cof = getCoefficientMultiplier(_deviceBrand, _region, _batteryWearLevel);
+
+        premium = basePremium * cof;
+        cof = getIntervalCoefficientMultiplier(_currentChargeLevel, _deviceAgeInMonths, _totalCpuUsage, _batteryDesignCapacity);
+        
+        premium = premium * cof;
+
+        // 1 000 000 000 000 is due to each cofficient multiplied by 100 
+        // TODO: use safe math
+        premium = premium.mul(100 + loading).div(100).div(uint(100)**TOTAL_COEFFICIENTS);  
+    }
+
+     function validate(
+        uint _batteryDesignCapacity, 
+        uint _currentChargeLevel,
+        uint _deviceAgeInMonths,
+        uint _totalCpuUsage,
+        string _region,
+        string _deviceBrand,
+        string _batteryWearLevel) 
+            external 
+            view 
+            returns (bytes2) {
+        
+        if (coefficients[DEVICE_BRAND][_deviceBrand] == 0) {
+            return(DEVICE_BRAND);
+        }
+
+        if (coefficients[REGION][_region] == 0) {
+            return(REGION);
+        }
+
+        if (coefficients[WEAR_LEVEL][_batteryWearLevel] == 0) {
+            return(WEAR_LEVEL);
+        }
+
+        if (getIntervalCoefficient(DESIGN_CAPACITY, _batteryDesignCapacity) == 0) {
+            return(DESIGN_CAPACITY);
+        }
+
+        if (getIntervalCoefficient(CPU_USAGE, _totalCpuUsage) == 0) {
+            return(CPU_USAGE);
+        }
+
+        if (getIntervalCoefficient(CHARGE_LEVEL, _currentChargeLevel) == 0) {   
+            return(CHARGE_LEVEL);
+        }
+
+        if (getIntervalCoefficient(DEVICE_AGE, _deviceAgeInMonths) == 0) {   
+            return(DEVICE_AGE);
+        }   
+
+        return "";
     }
 
     function initialize(uint _basePremium, uint _loading) external onlyOwner {
         basePremium = _basePremium;
         loading = _loading;
+
+        // BATTERY DESIGN CAPACITY
+        coefficientIntervals[DESIGN_CAPACITY].push(Interval(3000, 4000, 100));
 
         // CHARGE LEVEL
         coefficientIntervals[CHARGE_LEVEL].push(Interval(0, 10, 120));
@@ -141,7 +203,10 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         coefficients[WEAR_LEVEL][DEFAULT] = 0;
     }
 
-    function getCoefficientMultiplier(string _deviceBrand, string _region, string _batteryWearLevel) public view returns (uint result) {
+    function getCoefficientMultiplier(string _deviceBrand, string _region, string _batteryWearLevel) 
+            public 
+            view 
+            returns (uint coefficient) {
         uint deviceBrandMultiplier = coefficients[DEVICE_BRAND][DEFAULT];
         uint regionMultiplier = coefficients[REGION][DEFAULT];
         uint batteryWearLevelMultiplier = coefficients[WEAR_LEVEL][DEFAULT];
@@ -149,38 +214,42 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         if (coefficients[DEVICE_BRAND][_deviceBrand] != 0) {
             deviceBrandMultiplier = coefficients[DEVICE_BRAND][_deviceBrand];
         }
-
         if (coefficients[REGION][_region] != 0) {
             regionMultiplier = coefficients[REGION][_region];
         }
-
         if (coefficients[WEAR_LEVEL][_batteryWearLevel] != 0) {
             batteryWearLevelMultiplier = coefficients[WEAR_LEVEL][_batteryWearLevel];
         }
-
-        
-        result = deviceBrandMultiplier 
+        coefficient = deviceBrandMultiplier 
                     * regionMultiplier
                     * batteryWearLevelMultiplier;
     }
 
-    function getIntervalCoefficientMultiplier(uint _currentChargeLevel, uint _deviceAgeInMonths, uint _totalCpuUsage)
-    public view returns (uint result) {
-        uint totalCpuUsageMultiplier = getCoefficient(CPU_USAGE, _totalCpuUsage); 
-        uint chargeLevelMultiplier = getCoefficient(CHARGE_LEVEL, _currentChargeLevel); 
-        uint deviceAgeInMonthsMultiplier = getCoefficient(DEVICE_AGE, _deviceAgeInMonths); 
+    function getIntervalCoefficientMultiplier(uint _currentChargeLevel, uint _deviceAgeInMonths, uint _totalCpuUsage, uint _batteryDesignCapacity)
+            public 
+            view 
+            returns (uint result) {
+                
+        uint designCapacityMultiplier = getIntervalCoefficient(DESIGN_CAPACITY, _batteryDesignCapacity);
+        uint totalCpuUsageMultiplier = getIntervalCoefficient(CPU_USAGE, _totalCpuUsage); 
+        uint chargeLevelMultiplier = getIntervalCoefficient(CHARGE_LEVEL, _currentChargeLevel); 
+        uint deviceAgeInMonthsMultiplier = getIntervalCoefficient(DEVICE_AGE, _deviceAgeInMonths);
 
         result = totalCpuUsageMultiplier
                     * chargeLevelMultiplier
-                    * deviceAgeInMonthsMultiplier;
+                    * deviceAgeInMonthsMultiplier
+                    * designCapacityMultiplier;
     }
 
-    function getCoefficient(bytes2 _type, uint _value) public view returns (uint result) {
+    function getIntervalCoefficient(bytes2 _type, uint _value) 
+            public 
+            view 
+            returns (uint result) {
         for (uint i = 0; i < coefficientIntervals[_type].length; i++) {
-            if (coefficientIntervals[_type][i].min < _value &&
-                _value <= coefficientIntervals[_type][i].max) {
-                    result = coefficientIntervals[_type][i].coefficient;
-                }
+            if (coefficientIntervals[_type][i].min < _value
+                     && _value <= coefficientIntervals[_type][i].max) {
+                result = coefficientIntervals[_type][i].coefficient;
+            }
         }
     }
 
