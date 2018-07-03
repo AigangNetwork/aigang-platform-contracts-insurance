@@ -7,8 +7,8 @@ import "./interfaces/IERC20.sol";
 //import "./PremiumCalculator.sol";
 
 interface IProduct {
-    function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayOut, uint ipfsHash) external;
-    function claim(bytes32 _policyId, uint ipfsHash) external;
+    function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayOut, string _properties) public;
+    function claim(bytes32 _policyId, string _properties) public;
 }
 
 contract Product is Owned, IProduct {
@@ -28,12 +28,12 @@ contract Product is Owned, IProduct {
         uint utcEnd;
         uint premium;
         uint calculatedPayOut;
-        uint IPFSHash; // todo check how to store refference to any ETH storage
+        string properties;
         PayOutReason payOutReason;
         // claim
         uint payOut;
         uint utcPayOutDate;
-        uint claimIPFSHash;
+        string claimProperties;
     }
 
     enum PayOutReason {
@@ -80,10 +80,11 @@ contract Product is Owned, IProduct {
         paused = false;
     }
 
-    function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayOut, uint ipfsHash) public onlyAllowed notPaused {
+    function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayOut, string _properties) public onlyAllowed notPaused {
         policies[_id].utcStart = _utcStart;
         policies[_id].utcEnd = _utcEnd;
         policies[_id].calculatedPayOut = _calculatedPayOut;
+        policies[_id].properties = _properties;
 
         policiesCount++;
         policiesTotalCalculatedPayOuts = policiesTotalCalculatedPayOuts.add(_calculatedPayOut);
@@ -111,7 +112,7 @@ contract Product is Owned, IProduct {
         emit PaymentReceived(policyId, _amountOfTokens);
     }
           
-    function claim(bytes32 _policyId, uint ipfsHash) public 
+    function claim(bytes32 _policyId, string _properties) public 
             onlyAllowed 
             notPaused
             policyValidForPayOut(_policyId) { 
@@ -121,12 +122,12 @@ contract Product is Owned, IProduct {
         policies[_policyId].payOutReason = PayOutReason.Claim;
         policies[_policyId].utcPayOutDate = now;
         policies[_policyId].payOut = policies[_policyId].calculatedPayOut;
+        policies[_policyId].claimProperties = _properties;
 
         policiesPayoutsCount++;
         policiesTotalPayOuts = policiesTotalPayOuts.add(policies[_policyId].payOut);
 
         assert(IERC20(token).transfer(policies[_policyId].owner, policies[_policyId].payOut));
-
 
         emit Claim(_policyId, policies[_policyId].payOut);
     }
