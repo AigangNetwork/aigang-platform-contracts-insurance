@@ -75,8 +75,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         
         premium = premium * cof;
 
-        // 1 000 000 000 000 is due to each cofficient multiplied by 100 
-        // TODO: use safe math
+        // uint(100)**TOTAL_COEFFICIENTS is due to each cofficient multiplied by 100 
         premium = premium.mul(100 + loading).div(100).div(uint(100)**TOTAL_COEFFICIENTS);  
     }
 
@@ -255,7 +254,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
 
     function isClaimable() public pure returns (bool) {
 
-        return false; // TODO:
+        return true; // TODO:
     }
 
     function setBasePremium(uint _newBasePremium) external onlyOwner {
