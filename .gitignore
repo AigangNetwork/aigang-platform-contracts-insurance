@@ -1,6 +1,6 @@
 # Logs
 logs
-build
+build/contracts
 *.log
 npm-debug.log*
 

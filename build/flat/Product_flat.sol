@@ -1,14 +1,72 @@
-pragma solidity ^0.4.23;
-
-import "./utils/OwnedwithExecutor.sol";
-import "./utils/SafeMath.sol";
-import "./utils/BytesHelper.sol";
-import "./interfaces/IERC20.sol";
-//import "./PremiumCalculator.sol";
+pragma solidity ^0.4.13;
 
 interface IProduct {
     function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayOut, uint ipfsHash) external;
     function claim(bytes32 _policyId, uint ipfsHash) external;
+}
+
+interface IERC20 {
+  function transfer(address _to, uint256 _amount) external returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _amount) external returns (bool success);
+  function balanceOf(address _owner) constant external returns (uint256 balance);
+  function approve(address _spender, uint256 _amount) external returns (bool success);
+  function allowance(address _owner, address _spender) external constant returns (uint256 remaining);
+  function approveAndCall(address _spender, uint256 _amount, bytes _extraData) external returns (bool success);
+  function totalSupply() external constant returns (uint);
+}
+
+library BytesHelper {
+    function bytesToBytes32(bytes memory source) pure internal returns (bytes32 result) {
+        assembly {
+            result := mload(add(source, 32))
+        }
+    }
+}
+
+contract Owned {
+    address public owner;
+    address public executor;
+    address public newOwner;
+    address public newExecutor;
+  
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    constructor() public {
+        owner = msg.sender;
+        executor = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner, "User is not owner");
+        _;
+    }
+
+    modifier onlyAllowed {
+        require(msg.sender == owner || msg.sender == executor, "Not allowed");
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+
+    function transferExecutorOwnership(address _newExecutor) public onlyOwner {
+        newExecutor = _newExecutor;
+    }
+
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+
+     function acceptExecutorOwnership() public {
+        require(msg.sender == newExecutor);
+        emit OwnershipTransferred(executor, newExecutor);
+        executor = newExecutor;
+        newOwner = address(0);
+    }
 }
 
 contract Product is Owned, IProduct {
@@ -180,3 +238,23 @@ contract Product is Owned, IProduct {
         paused = _paused;
     }
 }
+
+library SafeMath {
+    function add(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function sub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function mul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function div(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
+}
+
