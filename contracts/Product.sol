@@ -1,13 +1,13 @@
 pragma solidity ^0.4.23;
 
-import "./utils/OwnedwithExecutor.sol";
+import "./utils/OwnedWithExecutor.sol";
 import "./utils/SafeMath.sol";
 import "./utils/BytesHelper.sol";
 import "./interfaces/IERC20.sol";
 //import "./PremiumCalculator.sol";
 
 interface IProduct {
-    function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayOut, string _properties) public;
+    function addPolicy(bytes32 _id, uint32 _utcStart, uint32 _utcEnd, uint _calculatedPayOut, string _properties) public;
     function claim(bytes32 _policyId, string _properties) public;
 }
 
@@ -24,15 +24,15 @@ contract Product is Owned, IProduct {
     // TODO: limit policies or payouts amoun or others limits in code not contracts.    
     struct Policy {
         address owner;
-        uint utcStart;
-        uint utcEnd;
+        uint32 utcStart;
+        uint32 utcEnd;
+        PayOutReason payOutReason;
         uint premium;
         uint calculatedPayOut;
         string properties;
-        PayOutReason payOutReason;
         // claim
         uint payOut;
-        uint utcPayOutDate;
+        uint32 utcPayOutDate;
         string claimProperties;
     }
 
@@ -80,7 +80,8 @@ contract Product is Owned, IProduct {
         paused = false;
     }
 
-    function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayOut, string _properties) public onlyAllowed notPaused {
+    function addPolicy(bytes32 _id, uint32 _utcStart, uint32 _utcEnd, uint _calculatedPayOut, string _properties) public onlyAllowed notPaused {
+        // TODO add theck it is payed
         policies[_id].utcStart = _utcStart;
         policies[_id].utcEnd = _utcEnd;
         policies[_id].calculatedPayOut = _calculatedPayOut;
@@ -120,7 +121,7 @@ contract Product is Owned, IProduct {
         require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayOut, "Contract balance is to low");
 
         policies[_policyId].payOutReason = PayOutReason.Claim;
-        policies[_policyId].utcPayOutDate = now;
+        policies[_policyId].utcPayOutDate = uint32(now);
         policies[_policyId].payOut = policies[_policyId].calculatedPayOut;
         policies[_policyId].claimProperties = _properties;
 
@@ -140,7 +141,7 @@ contract Product is Owned, IProduct {
         require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayOut, "Contract balance is to low");
 
         policies[_policyId].payOutReason = PayOutReason.Cancel;
-        policies[_policyId].utcPayOutDate = now;
+        policies[_policyId].utcPayOutDate = uint32(now);
         policies[_policyId].payOut = policies[_policyId].premium;
 
         policiesPayoutsCount++;
@@ -167,7 +168,6 @@ contract Product is Owned, IProduct {
    function tokenBalance() public view returns (uint) {
          return IERC20(token).balanceOf(this);
     }
-
 
     function withdrawETH() external onlyOwner {
         owner.transfer(address(this).balance);

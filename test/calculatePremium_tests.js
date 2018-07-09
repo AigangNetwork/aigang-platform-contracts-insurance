@@ -84,13 +84,36 @@ contract('PremiumCalculator', function(accounts) {
     })
 
     it('happy flow', async function() {
-      const batteryDesignCapacity = 3500 // 1
-      const currentChargeLevel = 5 // 1.2
-      const deviceAgeInMonths = 71 // 1.2
-      const totalCpuUsage = 99 // 1.1
-      const region = 'fi' // 1
-      const deviceBrand = 'elephone' // 1.1
-      const batteryWearLevel = '0' // 1
+      const batteryDesignCapacity = 3500
+      const currentChargeLevel = 5
+      const deviceAgeInMonths = 71
+      const totalCpuUsage = 99
+      const region = 'ca'
+      const deviceBrand = 'samsung'
+      const batteryWearLevel = '100'
+
+      const result = await premiumCalculatorInstance.validate(
+        batteryDesignCapacity,
+        currentChargeLevel,
+        deviceAgeInMonths,
+        totalCpuUsage,
+        region,
+        deviceBrand,
+        batteryWearLevel,
+        { from: accounts[0] }
+      )
+
+      assert.equal(web3.toUtf8(result), '')
+    })
+
+    it('DEVICE_BRAND should fail', async function() {
+      const batteryDesignCapacity = 3500
+      const currentChargeLevel = 5
+      const deviceAgeInMonths = 71
+      const totalCpuUsage = 99
+      const region = 'fi'
+      const deviceBrand = 'elephone'
+      const batteryWearLevel = '0'
 
       const notValid = await premiumCalculatorInstance.validate(
         batteryDesignCapacity,
@@ -104,6 +127,144 @@ contract('PremiumCalculator', function(accounts) {
       )
 
       assert.equal(web3.toUtf8(notValid), 'DB')
+    })
+
+    it('DESIGN_CAPACITY should fail', async function() {
+      const batteryDesignCapacity = 0
+      const currentChargeLevel = 5
+      const deviceAgeInMonths = 71
+      const totalCpuUsage = 99
+      const region = 'ca'
+      const deviceBrand = 'samsung'
+      const batteryWearLevel = '100'
+
+      const result = await premiumCalculatorInstance.validate(
+        batteryDesignCapacity,
+        currentChargeLevel,
+        deviceAgeInMonths,
+        totalCpuUsage,
+        region,
+        deviceBrand,
+        batteryWearLevel,
+        { from: accounts[0] }
+      )
+
+      assert.equal(web3.toUtf8(result), 'DC')
+    })
+
+    it('CHARGE_LEVEL should fail', async function() {
+      const batteryDesignCapacity = 3500
+      const currentChargeLevel = 0
+      const deviceAgeInMonths = 71
+      const totalCpuUsage = 99
+      const region = 'ca'
+      const deviceBrand = 'samsung'
+      const batteryWearLevel = '100'
+
+      const result = await premiumCalculatorInstance.validate(
+        batteryDesignCapacity,
+        currentChargeLevel,
+        deviceAgeInMonths,
+        totalCpuUsage,
+        region,
+        deviceBrand,
+        batteryWearLevel,
+        { from: accounts[0] }
+      )
+
+      assert.equal(web3.toUtf8(result), 'CL')
+    })
+
+    it('DEVICE_AGE should fail', async function() {
+      const batteryDesignCapacity = 3500
+      const currentChargeLevel = 5
+      const deviceAgeInMonths = 73
+      const totalCpuUsage = 99
+      const region = 'ca'
+      const deviceBrand = 'samsung'
+      const batteryWearLevel = '100'
+
+      const result = await premiumCalculatorInstance.validate(
+        batteryDesignCapacity,
+        currentChargeLevel,
+        deviceAgeInMonths,
+        totalCpuUsage,
+        region,
+        deviceBrand,
+        batteryWearLevel,
+        { from: accounts[0] }
+      )
+
+      assert.equal(web3.toUtf8(result), 'DA')
+    })
+
+    it('CPU_USAGE should fail', async function() {
+      const batteryDesignCapacity = 3500
+      const currentChargeLevel = 5
+      const deviceAgeInMonths = 3
+      const totalCpuUsage = 150
+      const region = 'ca'
+      const deviceBrand = 'samsung'
+      const batteryWearLevel = '100'
+
+      const result = await premiumCalculatorInstance.validate(
+        batteryDesignCapacity,
+        currentChargeLevel,
+        deviceAgeInMonths,
+        totalCpuUsage,
+        region,
+        deviceBrand,
+        batteryWearLevel,
+        { from: accounts[0] }
+      )
+
+      assert.equal(web3.toUtf8(result), 'CU')
+    })
+
+    it('REGION should fail', async function() {
+      const batteryDesignCapacity = 3500
+      const currentChargeLevel = 5
+      const deviceAgeInMonths = 3
+      const totalCpuUsage = 100
+      const region = 'G'
+      const deviceBrand = 'samsung'
+      const batteryWearLevel = '100'
+
+      const result = await premiumCalculatorInstance.validate(
+        batteryDesignCapacity,
+        currentChargeLevel,
+        deviceAgeInMonths,
+        totalCpuUsage,
+        region,
+        deviceBrand,
+        batteryWearLevel,
+        { from: accounts[0] }
+      )
+
+      assert.equal(web3.toUtf8(result), 'R')
+    })
+
+    it('WEAR_LEVEL should fail', async function() {
+      const batteryDesignCapacity = 3500 // 1
+      const currentChargeLevel = 5 // 1.2
+      const deviceAgeInMonths = 3 // 1.2
+      const totalCpuUsage = 100 // 1.1
+      const region = 'ca' // 1
+      const deviceBrand = 'samsung' // 1.1
+      const batteryWearLevel = '30' // 1
+
+      const result = await premiumCalculatorInstance.validate(
+        batteryDesignCapacity,
+        currentChargeLevel,
+        deviceAgeInMonths,
+        totalCpuUsage,
+        region,
+        deviceBrand,
+        batteryWearLevel,
+        { from: accounts[0] }
+      )
+
+      assert.equal(web3.toUtf8(result), 'WL')
     })
   })
 })

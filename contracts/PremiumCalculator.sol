@@ -79,7 +79,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         premium = premium.mul(100 + loading).div(100).div(uint(100)**TOTAL_COEFFICIENTS);  
     }
 
-     function validate(
+    function validate(
         uint _batteryDesignCapacity, 
         uint _currentChargeLevel,
         uint _deviceAgeInMonths,

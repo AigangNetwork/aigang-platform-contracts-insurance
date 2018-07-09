@@ -54,6 +54,7 @@ contract('Product', accounts => {
       let token = await productInstance.token({ from: owner })
       let utcProductStartDate = await productInstance.utcProductStartDate({ from: owner })
       let utcProductEndDate = await productInstance.utcProductEndDate({ from: owner })
+
       assert.equal(paused, false)
       assert.equal(premiumCalculator, premiumCalculatorInstance.address)
       assert.equal(utcProductStartDate, now)
@@ -100,13 +101,12 @@ contract('Product', accounts => {
       let p_owner = addresses[0]
       let start = Date.now()
       let end = start + 100
-      let premium = web3.toWei(1.2, 'ether')
       let calculatedPayOut = web3.toWei(1.6, 'ether')
-      let ipfsHash = 1
+      let properties = 'test 1'
 
       //testTokenInstance = await TestToken.new()
 
-      await productInstance.addPolicy(id, p_owner, start, end, premium, calculatedPayOut, ipfsHash, { from: owner })
+      await productInstance.addPolicy(id, start, end, calculatedPayOut, properties, { from: owner })
 
       let policiesCount = await productInstance.policiesCount({ from: owner })
 
