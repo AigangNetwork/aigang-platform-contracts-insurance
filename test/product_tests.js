@@ -37,11 +37,12 @@ contract('Product', accounts => {
       productInstance = await Product.new()
 
       const basePremium = web3.toWei(10, 'ether')
+      const payout = web3.toWei(20, 'ether')
       const loading = web3.toWei(1, 'ether')
       now = Date.now()
       endDate = now + 60
 
-      await premiumCalculatorInstance.initialize(basePremium, loading, { from: owner })
+      await premiumCalculatorInstance.initialize(basePremium, loading, payout, { from: owner })
     })
 
     it('happy flow', async function() {
@@ -86,11 +87,12 @@ contract('Product', accounts => {
       productInstance = await Product.new()
 
       const basePremium = web3.toWei(10, 'ether')
+      const payout = web3.toWei(20, 'ether')
       const loading = web3.toWei(1, 'ether')
       now = Date.now()
       endDate = now + 6000
 
-      await premiumCalculatorInstance.initialize(basePremium, loading, { from: owner })
+      await premiumCalculatorInstance.initialize(basePremium, loading, payout, { from: owner })
       await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
         from: owner
       })

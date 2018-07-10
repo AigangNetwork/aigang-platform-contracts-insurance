@@ -28,11 +28,15 @@ interface IPremiumCalculator {
     
     function isClaimable(
     ) external pure returns (bool);
+
+    function getPayout(
+    ) external view returns (uint);
 }
 
 
 contract PremiumCalculator is Owned, IPremiumCalculator {
     uint public basePremium; // AIX in weis
+    uint public payout;
     uint public loading;
 
     struct Interval {
@@ -58,6 +62,10 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
     bytes2[] public notValid;
     
     using SafeMath for uint;
+
+    function getPayout() external view returns (uint) {
+        return payout;
+    }
 
     function calculatePremium(
         uint _batteryDesignCapacity, 
@@ -122,9 +130,10 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         return "";
     }
 
-    function initialize(uint _basePremium, uint _loading) external onlyOwner {
+    function initialize(uint _basePremium, uint _loading, uint _payout) external onlyOwner {
         basePremium = _basePremium;
         loading = _loading;
+        payout = _payout;
 
         // BATTERY DESIGN CAPACITY
         coefficientIntervals[DESIGN_CAPACITY].push(Interval(3000, 4000, 100));

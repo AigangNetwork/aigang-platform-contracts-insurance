@@ -5,9 +5,10 @@ contract('PremiumCalculator', function(accounts) {
     const PremiumCalculatorInstance = await PremiumCalculator.new()
 
     const basePremiumInWei = web3.toWei(0.000001, 'ether')
+    const payout = web3.toWei(0.000002, 'ether')
     const loading = 50 // 50%
 
-    await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, { from: accounts[0] })
+    await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, payout, { from: accounts[0] })
 
     const batteryDesignCapacity = 3500 // 1
     const currentChargeLevel = 40 // 1
@@ -41,9 +42,10 @@ contract('PremiumCalculator', function(accounts) {
     const PremiumCalculatorInstance = await PremiumCalculator.new()
 
     const basePremiumInWei = web3.toWei(999999.999999, 'ether')
+    const payout = web3.toWei(1000, 'ether')
     const loading = 99
 
-    await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, { from: accounts[0] })
+    await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, payout, { from: accounts[0] })
 
     const batteryDesignCapacity = 3500 // 1
     const currentChargeLevel = 5 // 1.2
@@ -78,9 +80,10 @@ contract('PremiumCalculator', function(accounts) {
     beforeEach(async function() {
       premiumCalculatorInstance = await PremiumCalculator.new()
       const basePremium = web3.toWei(10, 'ether')
+      const payout = web3.toWei(20, 'ether')
       const loading = web3.toWei(1, 'ether')
 
-      await premiumCalculatorInstance.initialize(basePremium, loading, { from: accounts[0] })
+      await premiumCalculatorInstance.initialize(basePremium, loading, payout, { from: accounts[0] })
     })
 
     it('happy flow', async function() {
