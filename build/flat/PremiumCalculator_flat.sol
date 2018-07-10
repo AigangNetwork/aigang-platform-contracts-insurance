@@ -298,8 +298,15 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         loading = _newLoading;
     }
 
+    function setPayout(uint _newPayout) external onlyOwner {
+        emit PayoutUpdated(payout, _newPayout);
+        payout = _newPayout;
+    }
+
+
     event BasePremiumUpdated(uint oldBasePremium, uint newBasePremium);
     event LoadingUpdated(uint oldLoading, uint newLoading);
+    event PayoutUpdated(uint oldPayout, uint newPayout);
 }
 
 library SafeMath {
