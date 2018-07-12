@@ -115,4 +115,33 @@ contract('Product', accounts => {
       assert.equal(policiesCount, 1)
     })
   })
+
+  describe('#payment', async function() {
+    beforeEach(async function() {
+      premiumCalculatorInstance = await PremiumCalculator.new()
+      testTokenInstance = await TestToken.new()
+      productInstance = await Product.new()
+    })
+
+    it('happy flow', async function() {
+      const premium = 300
+      const policyId = 'fasdfa213'
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+      const policyIdBytes = web3.fromAscii(policyId)
+      now = Date.now()
+      endDate = now + 6000
+
+      await testTokenInstance.transfer(owner, web3.toWei(400))
+
+      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
+        from: owner
+      })
+
+      await productInstance.pause(false, { from: owner })
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+    })
+  })
 })

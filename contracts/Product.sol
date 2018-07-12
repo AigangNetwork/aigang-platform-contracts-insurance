@@ -7,7 +7,7 @@ import "./interfaces/IERC20.sol";
 //import "./PremiumCalculator.sol";
 
 interface IProduct {
-    function addPolicy(bytes32 _id, uint32 _utcStart, uint32 _utcEnd, uint _calculatedPayOut, string _properties) public;
+    function addPolicy(bytes32 _id, uint32 _utcStart, uint32 _utcEnd, uint _calculatedPayout, string _properties) public;
     function claim(bytes32 _policyId, string _properties) public;
 }
 
@@ -26,17 +26,17 @@ contract Product is Owned, IProduct {
         address owner;
         uint32 utcStart;
         uint32 utcEnd;
-        PayOutReason payOutReason;
+        PayoutReason payoutReason;
         uint premium;
-        uint calculatedPayOut;
+        uint calculatedPayout;
         string properties;
         // claim
-        uint payOut;
-        uint32 utcPayOutDate;
+        uint payout;
+        uint32 utcPayoutDate;
         string claimProperties;
     }
 
-    enum PayOutReason {
+    enum PayoutReason {
         NotSet,
         Claim,
         Cancel
@@ -50,9 +50,9 @@ contract Product is Owned, IProduct {
     bool public paused = true;
     
     uint public policiesCount;
-    uint public policiesTotalCalculatedPayOuts;
+    uint public policiesTotalCalculatedPayouts;
     uint public policiesPayoutsCount;
-    uint public policiesTotalPayOuts;
+    uint public policiesTotalPayouts;
         
     mapping(bytes32 => Policy) public policies;
 
@@ -66,9 +66,9 @@ contract Product is Owned, IProduct {
         _;
     }
 
-     modifier policyValidForPayOut(bytes32 _policyId) {
+     modifier policyValidForPayout(bytes32 _policyId) {
         require(policies[_policyId].owner != address(0), "Owner is not valid");       
-        require(policies[_policyId].payOut == 0, "PayOut already done");
+        require(policies[_policyId].payout == 0, "Payout already done");
         _;
     }
    
@@ -80,15 +80,15 @@ contract Product is Owned, IProduct {
         paused = false;
     }
 
-    function addPolicy(bytes32 _id, uint32 _utcStart, uint32 _utcEnd, uint _calculatedPayOut, string _properties) public onlyAllowed notPaused {
+    function addPolicy(bytes32 _id, uint32 _utcStart, uint32 _utcEnd, uint _calculatedPayout, string _properties) public onlyAllowed notPaused {
         // TODO add theck it is payed
         policies[_id].utcStart = _utcStart;
         policies[_id].utcEnd = _utcEnd;
-        policies[_id].calculatedPayOut = _calculatedPayOut;
+        policies[_id].calculatedPayout = _calculatedPayout;
         policies[_id].properties = _properties;
 
         policiesCount++;
-        policiesTotalCalculatedPayOuts = policiesTotalCalculatedPayOuts.add(_calculatedPayOut);
+        policiesTotalCalculatedPayouts = policiesTotalCalculatedPayouts.add(_calculatedPayout);
 
         emit PolicyAdd(_id);
     }
@@ -100,6 +100,7 @@ contract Product is Owned, IProduct {
             notPaused {
         require(_amountOfTokens > 0, "amount should be > 0");
         bytes32 policyId = _data.bytesToBytes32();
+        policies[policyId].owner = _from;
 
         require(policies[policyId].owner != address(0), "not valid policy owner");
         require(policies[policyId].premium == 0, "not valid policyId");
@@ -116,40 +117,40 @@ contract Product is Owned, IProduct {
     function claim(bytes32 _policyId, string _properties) public 
             onlyAllowed 
             notPaused
-            policyValidForPayOut(_policyId) { 
+            policyValidForPayout(_policyId) { 
       
-        require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayOut, "Contract balance is to low");
+        require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayout, "Contract balance is to low");
 
-        policies[_policyId].payOutReason = PayOutReason.Claim;
-        policies[_policyId].utcPayOutDate = uint32(now);
-        policies[_policyId].payOut = policies[_policyId].calculatedPayOut;
+        policies[_policyId].payoutReason = PayoutReason.Claim;
+        policies[_policyId].utcPayoutDate = uint32(now);
+        policies[_policyId].payout = policies[_policyId].calculatedPayout;
         policies[_policyId].claimProperties = _properties;
 
         policiesPayoutsCount++;
-        policiesTotalPayOuts = policiesTotalPayOuts.add(policies[_policyId].payOut);
+        policiesTotalPayouts = policiesTotalPayouts.add(policies[_policyId].payout);
 
-        assert(IERC20(token).transfer(policies[_policyId].owner, policies[_policyId].payOut));
+        assert(IERC20(token).transfer(policies[_policyId].owner, policies[_policyId].payout));
 
-        emit Claim(_policyId, policies[_policyId].payOut);
+        emit Claim(_policyId, policies[_policyId].payout);
     }
 
     function cancel(bytes32 _policyId) public 
             onlyAllowed 
             notPaused
-            policyValidForPayOut(_policyId) {
+            policyValidForPayout(_policyId) {
 
-        require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayOut, "Contract balance is to low");
+        require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayout, "Contract balance is to low");
 
-        policies[_policyId].payOutReason = PayOutReason.Cancel;
-        policies[_policyId].utcPayOutDate = uint32(now);
-        policies[_policyId].payOut = policies[_policyId].premium;
+        policies[_policyId].payoutReason = PayoutReason.Cancel;
+        policies[_policyId].utcPayoutDate = uint32(now);
+        policies[_policyId].payout = policies[_policyId].premium;
 
         policiesPayoutsCount++;
-        policiesTotalPayOuts = policiesTotalPayOuts.add(policies[_policyId].payOut);
+        policiesTotalPayouts = policiesTotalPayouts.add(policies[_policyId].payout);
 
-        assert(IERC20(token).transfer(policies[_policyId].owner, policies[_policyId].payOut));
+        assert(IERC20(token).transfer(policies[_policyId].owner, policies[_policyId].payout));
 
-        emit Cancel(_policyId, policies[_policyId].payOut);
+        emit Cancel(_policyId, policies[_policyId].payout);
     }
 
     function updatePremiumCalculator(address _newCalculator) public onlyOwner {
