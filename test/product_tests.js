@@ -121,27 +121,53 @@ contract('Product', accounts => {
       premiumCalculatorInstance = await PremiumCalculator.new()
       testTokenInstance = await TestToken.new()
       productInstance = await Product.new()
-    })
-
-    it('happy flow', async function() {
-      const premium = 300
-      const policyId = 'fasdfa213'
-      const paymentValue = web3.toWei(premium.toString(), 'ether')
-      const policyIdBytes = web3.fromAscii(policyId)
       now = Date.now()
       endDate = now + 6000
-
-      await testTokenInstance.transfer(owner, web3.toWei(400))
 
       await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
         from: owner
       })
 
-      await productInstance.pause(false, { from: owner })
+      await testTokenInstance.transfer(owner, web3.toWei(2000))
+    })
+
+    it('happy flow', async function() {
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+      let policyIdBytes = web3.fromAscii('firstID')
+
+      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
+        from: owner
+      })
 
       await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
         from: owner
       })
+
+      policyIdBytes = web3.fromAscii('secondID')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+    })
+
+    it('throws that not valid policy owner', async function() {
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+      let policyIdBytes = web3.fromAscii('thirdID')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+
+      try {
+        await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+          from: owner
+        })
+      } catch (error) {
+        const invalidJump = error.message.search('revert') >= 0
+        assert(invalidJump, 'Expected revert')
+      }
     })
   })
 })

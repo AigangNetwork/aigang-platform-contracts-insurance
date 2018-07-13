@@ -84,7 +84,6 @@ contract Product is Owned, IProduct {
         address owner;
         uint32 utcStart;
         uint32 utcEnd;
-        PayoutReason payoutReason;
         uint premium;
         uint calculatedPayout;
         string properties;
@@ -92,12 +91,8 @@ contract Product is Owned, IProduct {
         uint payout;
         uint32 utcPayoutDate;
         string claimProperties;
-    }
-
-    enum PayoutReason {
-        NotSet,
-        Claim,
-        Cancel
+        bool isPaidOut;
+        bool isCanceled;
     }
     
     address public token;
@@ -179,7 +174,7 @@ contract Product is Owned, IProduct {
       
         require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayout, "Contract balance is to low");
 
-        policies[_policyId].payoutReason = PayoutReason.Claim;
+        policies[_policyId].isPaidOut = true;
         policies[_policyId].utcPayoutDate = uint32(now);
         policies[_policyId].payout = policies[_policyId].calculatedPayout;
         policies[_policyId].claimProperties = _properties;
@@ -199,7 +194,7 @@ contract Product is Owned, IProduct {
 
         require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayout, "Contract balance is to low");
 
-        policies[_policyId].payoutReason = PayoutReason.Cancel;
+        policies[_policyId].isCanceled = true;
         policies[_policyId].utcPayoutDate = uint32(now);
         policies[_policyId].payout = policies[_policyId].premium;
 
