@@ -8,7 +8,6 @@ interface IPremiumCalculator {
         uint _batteryDesignCapacity,
         uint _currentChargeLevel,
         uint _deviceAgeInMonths,
-        uint _totalCpuUsage,
         string _region,
         string _deviceBrand,
         string _batteryWearLevel
@@ -18,7 +17,6 @@ interface IPremiumCalculator {
         uint _batteryDesignCapacity, 
         uint _currentChargeLevel,
         uint _deviceAgeInMonths,
-        uint _totalCpuUsage,
         string _region,
         string _deviceBrand,
         string _batteryWearLevel) 
@@ -47,13 +45,12 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
 
     mapping (bytes2 => mapping(string => uint) ) coefficients;
     mapping (bytes2 => Interval[]) coefficientIntervals;
-    uint constant TOTAL_COEFFICIENTS = 7;
+    uint constant TOTAL_COEFFICIENTS = 6;
    
     string constant DEFAULT = "default";
     bytes2 constant DESIGN_CAPACITY = "DC";  
     bytes2 constant CHARGE_LEVEL = "CL";  
     bytes2 constant DEVICE_AGE = "DA"; // in months
-    bytes2 constant CPU_USAGE = "CU";
 
     bytes2 constant REGION = "R";
     bytes2 constant DEVICE_BRAND = "DB";
@@ -71,7 +68,6 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         uint _batteryDesignCapacity, 
         uint _currentChargeLevel,
         uint _deviceAgeInMonths,
-        uint _totalCpuUsage,
         string _region,
         string _deviceBrand,
         string _batteryWearLevel) external view returns (uint premium) {
@@ -79,7 +75,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         uint cof = getCoefficientMultiplier(_deviceBrand, _region, _batteryWearLevel);
 
         premium = basePremium * cof;
-        cof = getIntervalCoefficientMultiplier(_currentChargeLevel, _deviceAgeInMonths, _totalCpuUsage, _batteryDesignCapacity);
+        cof = getIntervalCoefficientMultiplier(_currentChargeLevel, _deviceAgeInMonths, _batteryDesignCapacity);
         
         premium = premium * cof;
 
@@ -91,7 +87,6 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         uint _batteryDesignCapacity, 
         uint _currentChargeLevel,
         uint _deviceAgeInMonths,
-        uint _totalCpuUsage,
         string _region,
         string _deviceBrand,
         string _batteryWearLevel) 
@@ -113,10 +108,6 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
 
         if (getIntervalCoefficient(DESIGN_CAPACITY, _batteryDesignCapacity) == 0) {
             return(DESIGN_CAPACITY);
-        }
-
-        if (getIntervalCoefficient(CPU_USAGE, _totalCpuUsage) == 0) {
-            return(CPU_USAGE);
         }
 
         if (getIntervalCoefficient(CHARGE_LEVEL, _currentChargeLevel) == 0) {   
@@ -157,12 +148,6 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         coefficientIntervals[DEVICE_AGE].push(Interval(6, 12, 100));
         coefficientIntervals[DEVICE_AGE].push(Interval(12, 24, 110));
         coefficientIntervals[DEVICE_AGE].push(Interval(24, 72, 120));
-
-        // CPU USAGE
-        coefficientIntervals[CPU_USAGE].push(Interval(0, 10, 95));
-        coefficientIntervals[CPU_USAGE].push(Interval(10, 20, 100));
-        coefficientIntervals[CPU_USAGE].push(Interval(20, 30, 105));
-        coefficientIntervals[CPU_USAGE].push(Interval(30, 100, 110));
 
         // REGION
         coefficients[REGION]["ca"] = 100;
@@ -233,18 +218,16 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
                     * batteryWearLevelMultiplier;
     }
 
-    function getIntervalCoefficientMultiplier(uint _currentChargeLevel, uint _deviceAgeInMonths, uint _totalCpuUsage, uint _batteryDesignCapacity)
+    function getIntervalCoefficientMultiplier(uint _currentChargeLevel, uint _deviceAgeInMonths, uint _batteryDesignCapacity)
             public 
             view 
             returns (uint result) {
                 
         uint designCapacityMultiplier = getIntervalCoefficient(DESIGN_CAPACITY, _batteryDesignCapacity);
-        uint totalCpuUsageMultiplier = getIntervalCoefficient(CPU_USAGE, _totalCpuUsage); 
         uint chargeLevelMultiplier = getIntervalCoefficient(CHARGE_LEVEL, _currentChargeLevel); 
         uint deviceAgeInMonthsMultiplier = getIntervalCoefficient(DEVICE_AGE, _deviceAgeInMonths);
 
-        result = totalCpuUsageMultiplier
-                    * chargeLevelMultiplier
+        result = chargeLevelMultiplier
                     * deviceAgeInMonthsMultiplier
                     * designCapacityMultiplier;
     }
@@ -266,6 +249,33 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         return true; // TODO:
     }
 
+    function removeIntervalCoefficient(bytes2 _type, uint _coefficient) external onlyOwner {
+        for (uint i = 0; i < coefficientIntervals[_type].length; i++) {
+            if (coefficientIntervals[_type][i].coefficient == _coefficient) {
+                emit CoefficientRemoved(_type, coefficientIntervals[_type][i].coefficient);
+                delete coefficientIntervals[_type][i];
+            }
+        }
+    }
+
+    function setIntervalCoefficient(bytes2 _type, uint _minValue, uint _maxValue, uint _coefficient) external onlyOwner {
+        for (uint i = 0; i < coefficientIntervals[_type].length; i++) {
+            if (coefficientIntervals[_type][i].coefficient == _coefficient) {
+                emit IntervalCoefficientSet(_type, _minValue, _maxValue, _coefficient);
+                coefficientIntervals[_type][i].min = _minValue;
+                coefficientIntervals[_type][i].max = _maxValue;
+                return;
+            }
+        }
+        emit IntervalCoefficientSet(_type, _minValue, _maxValue, _coefficient);
+        coefficientIntervals[_type].push(Interval(_minValue, _maxValue, _coefficient));
+    }
+
+    function setCoefficient(bytes2 _type, string _key, uint _coefficient) external onlyOwner {
+        emit CoefficientSet(_type, _key, _coefficient);
+        coefficients[_type][_key] =_coefficient;
+    }
+
     function setBasePremium(uint _newBasePremium) external onlyOwner {
         emit BasePremiumUpdated(basePremium, _newBasePremium);
         basePremium = _newBasePremium;
@@ -281,7 +291,9 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         payout = _newPayout;
     }
 
-
+    event CoefficientSet(bytes2 coefficientType, string key, uint coefficient);
+    event CoefficientRemoved(bytes2 coefficientType, uint coefficient);
+    event IntervalCoefficientSet(bytes2 coefficientType, uint minValue, uint maxValue, uint newCoefficient);
     event BasePremiumUpdated(uint oldBasePremium, uint newBasePremium);
     event LoadingUpdated(uint oldLoading, uint newLoading);
     event PayoutUpdated(uint oldPayout, uint newPayout);

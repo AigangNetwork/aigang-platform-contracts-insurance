@@ -13,7 +13,6 @@ contract('PremiumCalculator', function(accounts) {
     const batteryDesignCapacity = 3500 // 1
     const currentChargeLevel = 40 // 1
     const deviceAgeInMonths = 1 // 0.9
-    const totalCpuUsage = 5 // 0.95
     const region = 'fi' // 1
     const deviceBrand = 'huawei' // 1
     const batteryWearLevel = '100' // 1
@@ -25,7 +24,6 @@ contract('PremiumCalculator', function(accounts) {
       batteryDesignCapacity,
       currentChargeLevel,
       deviceAgeInMonths,
-      totalCpuUsage,
       region,
       deviceBrand,
       batteryWearLevel,
@@ -35,7 +33,7 @@ contract('PremiumCalculator', function(accounts) {
     const premiumInETH = web3.fromWei(premium.toNumber(), 'ether')
 
     //actual, expected
-    assert.equal(premiumInETH, 0.0000012825)
+    assert.equal(premiumInETH, 0.00000135)
   })
 
   it('...should calculate maximum possible premium', async function() {
@@ -50,7 +48,6 @@ contract('PremiumCalculator', function(accounts) {
     const batteryDesignCapacity = 3500 // 1
     const currentChargeLevel = 5 // 1.2
     const deviceAgeInMonths = 71 // 1.2
-    const totalCpuUsage = 99 // 1.1
     const region = 'fi' // 1
     const deviceBrand = 'elephone' // 1.1
     const batteryWearLevel = '100' // 1
@@ -62,7 +59,6 @@ contract('PremiumCalculator', function(accounts) {
       batteryDesignCapacity,
       currentChargeLevel,
       deviceAgeInMonths,
-      totalCpuUsage,
       region,
       deviceBrand,
       batteryWearLevel,
@@ -71,7 +67,7 @@ contract('PremiumCalculator', function(accounts) {
 
     const premiumInETH = web3.fromWei(premium.toNumber(), 'ether')
 
-    assert.equal(premiumInETH, 3467375.9999965324)
+    assert.equal(premiumInETH, 3152159.999996848)
   })
 
   describe('#validate', async function() {
@@ -90,7 +86,6 @@ contract('PremiumCalculator', function(accounts) {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 71
-      const totalCpuUsage = 99
       const region = 'ca'
       const deviceBrand = 'samsung'
       const batteryWearLevel = '100'
@@ -99,7 +94,6 @@ contract('PremiumCalculator', function(accounts) {
         batteryDesignCapacity,
         currentChargeLevel,
         deviceAgeInMonths,
-        totalCpuUsage,
         region,
         deviceBrand,
         batteryWearLevel,
@@ -113,7 +107,6 @@ contract('PremiumCalculator', function(accounts) {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 71
-      const totalCpuUsage = 99
       const region = 'fi'
       const deviceBrand = 'elephone'
       const batteryWearLevel = '0'
@@ -122,7 +115,6 @@ contract('PremiumCalculator', function(accounts) {
         batteryDesignCapacity,
         currentChargeLevel,
         deviceAgeInMonths,
-        totalCpuUsage,
         region,
         deviceBrand,
         batteryWearLevel,
@@ -136,7 +128,6 @@ contract('PremiumCalculator', function(accounts) {
       const batteryDesignCapacity = 0
       const currentChargeLevel = 5
       const deviceAgeInMonths = 71
-      const totalCpuUsage = 99
       const region = 'ca'
       const deviceBrand = 'samsung'
       const batteryWearLevel = '100'
@@ -145,7 +136,6 @@ contract('PremiumCalculator', function(accounts) {
         batteryDesignCapacity,
         currentChargeLevel,
         deviceAgeInMonths,
-        totalCpuUsage,
         region,
         deviceBrand,
         batteryWearLevel,
@@ -159,7 +149,6 @@ contract('PremiumCalculator', function(accounts) {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 0
       const deviceAgeInMonths = 71
-      const totalCpuUsage = 99
       const region = 'ca'
       const deviceBrand = 'samsung'
       const batteryWearLevel = '100'
@@ -168,7 +157,6 @@ contract('PremiumCalculator', function(accounts) {
         batteryDesignCapacity,
         currentChargeLevel,
         deviceAgeInMonths,
-        totalCpuUsage,
         region,
         deviceBrand,
         batteryWearLevel,
@@ -182,7 +170,6 @@ contract('PremiumCalculator', function(accounts) {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 73
-      const totalCpuUsage = 99
       const region = 'ca'
       const deviceBrand = 'samsung'
       const batteryWearLevel = '100'
@@ -191,7 +178,6 @@ contract('PremiumCalculator', function(accounts) {
         batteryDesignCapacity,
         currentChargeLevel,
         deviceAgeInMonths,
-        totalCpuUsage,
         region,
         deviceBrand,
         batteryWearLevel,
@@ -201,34 +187,10 @@ contract('PremiumCalculator', function(accounts) {
       assert.equal(web3.toUtf8(result), 'DA')
     })
 
-    it('CPU_USAGE should fail', async function() {
-      const batteryDesignCapacity = 3500
-      const currentChargeLevel = 5
-      const deviceAgeInMonths = 3
-      const totalCpuUsage = 150
-      const region = 'ca'
-      const deviceBrand = 'samsung'
-      const batteryWearLevel = '100'
-
-      const result = await premiumCalculatorInstance.validate(
-        batteryDesignCapacity,
-        currentChargeLevel,
-        deviceAgeInMonths,
-        totalCpuUsage,
-        region,
-        deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
-      )
-
-      assert.equal(web3.toUtf8(result), 'CU')
-    })
-
     it('REGION should fail', async function() {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 3
-      const totalCpuUsage = 100
       const region = 'G'
       const deviceBrand = 'samsung'
       const batteryWearLevel = '100'
@@ -237,7 +199,6 @@ contract('PremiumCalculator', function(accounts) {
         batteryDesignCapacity,
         currentChargeLevel,
         deviceAgeInMonths,
-        totalCpuUsage,
         region,
         deviceBrand,
         batteryWearLevel,
@@ -251,7 +212,6 @@ contract('PremiumCalculator', function(accounts) {
       const batteryDesignCapacity = 3500 // 1
       const currentChargeLevel = 5 // 1.2
       const deviceAgeInMonths = 3 // 1.2
-      const totalCpuUsage = 100 // 1.1
       const region = 'ca' // 1
       const deviceBrand = 'samsung' // 1.1
       const batteryWearLevel = '30' // 1
@@ -260,7 +220,6 @@ contract('PremiumCalculator', function(accounts) {
         batteryDesignCapacity,
         currentChargeLevel,
         deviceAgeInMonths,
-        totalCpuUsage,
         region,
         deviceBrand,
         batteryWearLevel,
@@ -268,6 +227,102 @@ contract('PremiumCalculator', function(accounts) {
       )
 
       assert.equal(web3.toUtf8(result), 'WL')
+    })
+  })
+
+  describe('#coefficients', async function() {
+    let premiumCalculatorInstance
+
+    beforeEach(async function() {
+      premiumCalculatorInstance = await PremiumCalculator.new()
+      const basePremium = web3.toWei(100, 'ether')
+      const payout = web3.toWei(200, 'ether')
+      const loading = 50
+
+      await premiumCalculatorInstance.initialize(basePremium, loading, payout, { from: accounts[0] })
+    })
+
+    it('...should remove interval coefficient', async function() {
+      const batteryDesignCapacity = 3500 // 1
+      const currentChargeLevel = 99 // 1
+      const deviceAgeInMonths = 7 // 1
+      const region = 'fi' // 1
+      const deviceBrand = 'samsung' // 1
+      const batteryWearLevel = '100' // 1
+      const type = 'DC'
+      const coefficient = 100
+
+      await premiumCalculatorInstance.removeIntervalCoefficient(type, coefficient)
+
+      const premium = await premiumCalculatorInstance.calculatePremium(
+        batteryDesignCapacity,
+        currentChargeLevel,
+        deviceAgeInMonths,
+        region,
+        deviceBrand,
+        batteryWearLevel,
+        { from: accounts[0] }
+      )
+
+      const premiumInETH = web3.fromWei(premium.toNumber(), 'ether')
+
+      assert.equal(premiumInETH, 0)
+    })
+
+    it('...should set coefficient', async function() {
+      const batteryDesignCapacity = 3500 // 1
+      const currentChargeLevel = 99 // 1
+      const deviceAgeInMonths = 7 // 1
+      const region = 'fi' // 1
+      const deviceBrand = 'samsung' // 1
+      const batteryWearLevel = '100' // 1
+      const type = 'R'
+      const newCoefficient = 200
+
+      await premiumCalculatorInstance.setCoefficient(type, region, newCoefficient)
+
+      const premium = await premiumCalculatorInstance.calculatePremium(
+        batteryDesignCapacity,
+        currentChargeLevel,
+        deviceAgeInMonths,
+        region,
+        deviceBrand,
+        batteryWearLevel,
+        { from: accounts[0] }
+      )
+
+      const premiumInETH = web3.fromWei(premium.toNumber(), 'ether')
+
+      assert.equal(premiumInETH, 300)
+    })
+
+    it('...should set interval coefficient', async function() {
+      const batteryDesignCapacity = 2500 // 1
+      const currentChargeLevel = 99 // 1
+      const deviceAgeInMonths = 7 // 1
+      const region = 'fi' // 1
+      const deviceBrand = 'samsung' // 1
+      const batteryWearLevel = '100' // 1
+      const type = 'DC'
+      const minValue = 2000
+      const maxValue = 5000
+      const coefficient = 100
+
+      await premiumCalculatorInstance.setIntervalCoefficient(type, minValue, maxValue, coefficient)
+
+      const premium = await premiumCalculatorInstance.calculatePremium(
+        batteryDesignCapacity,
+        currentChargeLevel,
+        deviceAgeInMonths,
+        region,
+        deviceBrand,
+        batteryWearLevel,
+        { from: accounts[0] }
+      )
+
+      const premiumInETH = web3.fromWei(premium.toNumber(), 'ether')
+
+      assert.equal(premiumInETH, 150)
     })
   })
 })
