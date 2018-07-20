@@ -325,4 +325,28 @@ contract('PremiumCalculator', function(accounts) {
       assert.equal(premiumInETH, 150)
     })
   })
+
+  describe('#claim', async function() {
+    let premiumCalculatorInstance
+
+    beforeEach(async function() {
+      premiumCalculatorInstance = await PremiumCalculator.new()
+    })
+
+    it('...should be claimable', async function() {
+      const batteryWearLevel = 20
+
+      const isClaimable = await premiumCalculatorInstance.isClaimable(batteryWearLevel, { from: accounts[0] })
+
+      assert.equal(isClaimable, true)
+    })
+
+    it('...should not be claimable', async function() {
+      const batteryWearLevel = 31
+
+      const isClaimable = await premiumCalculatorInstance.isClaimable(batteryWearLevel, { from: accounts[0] })
+
+      assert.equal(isClaimable, false)
+    })
+  })
 })
