@@ -1,14 +1,16 @@
 var PremiumCalculator = artifacts.require('./PremiumCalculator.sol')
 
-contract('PremiumCalculator', function(accounts) {
-  it('...should calculate minimum possible premium', async function() {
+contract('PremiumCalculator', function (accounts) {
+  it('...should calculate minimum possible premium', async function () {
     const PremiumCalculatorInstance = await PremiumCalculator.new()
 
     const basePremiumInWei = web3.toWei(0.000001, 'ether')
     const payout = web3.toWei(0.000002, 'ether')
     const loading = 50 // 50%
 
-    await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, payout, { from: accounts[0] })
+    await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, payout, {
+      from: accounts[0]
+    })
 
     const batteryDesignCapacity = 3500 // 1
     const currentChargeLevel = 40 // 1
@@ -26,8 +28,9 @@ contract('PremiumCalculator', function(accounts) {
       deviceAgeInMonths,
       region,
       deviceBrand,
-      batteryWearLevel,
-      { from: accounts[0] }
+      batteryWearLevel, {
+        from: accounts[0]
+      }
     )
 
     const premiumInETH = web3.fromWei(premium.toNumber(), 'ether')
@@ -36,14 +39,16 @@ contract('PremiumCalculator', function(accounts) {
     assert.equal(premiumInETH, 0.00000135)
   })
 
-  it('...should calculate maximum possible premium', async function() {
+  it('...should calculate maximum possible premium', async function () {
     const PremiumCalculatorInstance = await PremiumCalculator.new()
 
     const basePremiumInWei = web3.toWei(999999.999999, 'ether')
     const payout = web3.toWei(1000, 'ether')
     const loading = 99
 
-    await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, payout, { from: accounts[0] })
+    await PremiumCalculatorInstance.initialize(basePremiumInWei, loading, payout, {
+      from: accounts[0]
+    })
 
     const batteryDesignCapacity = 3500 // 1
     const currentChargeLevel = 5 // 1.2
@@ -61,8 +66,9 @@ contract('PremiumCalculator', function(accounts) {
       deviceAgeInMonths,
       region,
       deviceBrand,
-      batteryWearLevel,
-      { from: accounts[0] }
+      batteryWearLevel, {
+        from: accounts[0]
+      }
     )
 
     const premiumInETH = web3.fromWei(premium.toNumber(), 'ether')
@@ -70,19 +76,21 @@ contract('PremiumCalculator', function(accounts) {
     assert.equal(premiumInETH, 3152159.999996848)
   })
 
-  describe('#validate', async function() {
+  describe('#validate', async function () {
     let premiumCalculatorInstance
 
-    beforeEach(async function() {
+    beforeEach(async function () {
       premiumCalculatorInstance = await PremiumCalculator.new()
       const basePremium = web3.toWei(10, 'ether')
       const payout = web3.toWei(20, 'ether')
       const loading = web3.toWei(1, 'ether')
 
-      await premiumCalculatorInstance.initialize(basePremium, loading, payout, { from: accounts[0] })
+      await premiumCalculatorInstance.initialize(basePremium, loading, payout, {
+        from: accounts[0]
+      })
     })
 
-    it('happy flow', async function() {
+    it('happy flow', async function () {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 71
@@ -96,14 +104,15 @@ contract('PremiumCalculator', function(accounts) {
         deviceAgeInMonths,
         region,
         deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
+        batteryWearLevel, {
+          from: accounts[0]
+        }
       )
 
       assert.equal(web3.toUtf8(result), '')
     })
 
-    it('DEVICE_BRAND should fail', async function() {
+    it('DEVICE_BRAND should fail', async function () {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 71
@@ -117,14 +126,15 @@ contract('PremiumCalculator', function(accounts) {
         deviceAgeInMonths,
         region,
         deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
+        batteryWearLevel, {
+          from: accounts[0]
+        }
       )
 
       assert.equal(web3.toUtf8(notValid), 'DB')
     })
 
-    it('DESIGN_CAPACITY should fail', async function() {
+    it('DESIGN_CAPACITY should fail', async function () {
       const batteryDesignCapacity = 0
       const currentChargeLevel = 5
       const deviceAgeInMonths = 71
@@ -138,14 +148,15 @@ contract('PremiumCalculator', function(accounts) {
         deviceAgeInMonths,
         region,
         deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
+        batteryWearLevel, {
+          from: accounts[0]
+        }
       )
 
       assert.equal(web3.toUtf8(result), 'DC')
     })
 
-    it('CHARGE_LEVEL should fail', async function() {
+    it('CHARGE_LEVEL should fail', async function () {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 0
       const deviceAgeInMonths = 71
@@ -159,14 +170,15 @@ contract('PremiumCalculator', function(accounts) {
         deviceAgeInMonths,
         region,
         deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
+        batteryWearLevel, {
+          from: accounts[0]
+        }
       )
 
       assert.equal(web3.toUtf8(result), 'CL')
     })
 
-    it('DEVICE_AGE should fail', async function() {
+    it('DEVICE_AGE should fail', async function () {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 73
@@ -180,14 +192,15 @@ contract('PremiumCalculator', function(accounts) {
         deviceAgeInMonths,
         region,
         deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
+        batteryWearLevel, {
+          from: accounts[0]
+        }
       )
 
       assert.equal(web3.toUtf8(result), 'DA')
     })
 
-    it('REGION should fail', async function() {
+    it('REGION should fail', async function () {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 3
@@ -201,14 +214,15 @@ contract('PremiumCalculator', function(accounts) {
         deviceAgeInMonths,
         region,
         deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
+        batteryWearLevel, {
+          from: accounts[0]
+        }
       )
 
       assert.equal(web3.toUtf8(result), 'R')
     })
 
-    it('WEAR_LEVEL should fail', async function() {
+    it('WEAR_LEVEL should fail', async function () {
       const batteryDesignCapacity = 3500 // 1
       const currentChargeLevel = 5 // 1.2
       const deviceAgeInMonths = 3 // 1.2
@@ -222,27 +236,30 @@ contract('PremiumCalculator', function(accounts) {
         deviceAgeInMonths,
         region,
         deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
+        batteryWearLevel, {
+          from: accounts[0]
+        }
       )
 
       assert.equal(web3.toUtf8(result), 'WL')
     })
   })
 
-  describe('#coefficients', async function() {
+  describe('#coefficients', async function () {
     let premiumCalculatorInstance
 
-    beforeEach(async function() {
+    beforeEach(async function () {
       premiumCalculatorInstance = await PremiumCalculator.new()
       const basePremium = web3.toWei(100, 'ether')
       const payout = web3.toWei(200, 'ether')
       const loading = 50
 
-      await premiumCalculatorInstance.initialize(basePremium, loading, payout, { from: accounts[0] })
+      await premiumCalculatorInstance.initialize(basePremium, loading, payout, {
+        from: accounts[0]
+      })
     })
 
-    it('...should remove interval coefficient', async function() {
+    it('...should remove interval coefficient', async function () {
       const batteryDesignCapacity = 3500 // 1
       const currentChargeLevel = 99 // 1
       const deviceAgeInMonths = 7 // 1
@@ -260,8 +277,9 @@ contract('PremiumCalculator', function(accounts) {
         deviceAgeInMonths,
         region,
         deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
+        batteryWearLevel, {
+          from: accounts[0]
+        }
       )
 
       const premiumInETH = web3.fromWei(premium.toNumber(), 'ether')
@@ -269,7 +287,7 @@ contract('PremiumCalculator', function(accounts) {
       assert.equal(premiumInETH, 0)
     })
 
-    it('...should set coefficient', async function() {
+    it('...should set coefficient', async function () {
       const batteryDesignCapacity = 3500 // 1
       const currentChargeLevel = 99 // 1
       const deviceAgeInMonths = 7 // 1
@@ -287,8 +305,9 @@ contract('PremiumCalculator', function(accounts) {
         deviceAgeInMonths,
         region,
         deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
+        batteryWearLevel, {
+          from: accounts[0]
+        }
       )
 
       const premiumInETH = web3.fromWei(premium.toNumber(), 'ether')
@@ -296,7 +315,7 @@ contract('PremiumCalculator', function(accounts) {
       assert.equal(premiumInETH, 300)
     })
 
-    it('...should set interval coefficient', async function() {
+    it('...should set interval coefficient', async function () {
       const batteryDesignCapacity = 2500 // 1
       const currentChargeLevel = 99 // 1
       const deviceAgeInMonths = 7 // 1
@@ -316,8 +335,9 @@ contract('PremiumCalculator', function(accounts) {
         deviceAgeInMonths,
         region,
         deviceBrand,
-        batteryWearLevel,
-        { from: accounts[0] }
+        batteryWearLevel, {
+          from: accounts[0]
+        }
       )
 
       const premiumInETH = web3.fromWei(premium.toNumber(), 'ether')
@@ -326,25 +346,29 @@ contract('PremiumCalculator', function(accounts) {
     })
   })
 
-  describe('#claim', async function() {
+  describe('#claim', async function () {
     let premiumCalculatorInstance
 
-    beforeEach(async function() {
+    beforeEach(async function () {
       premiumCalculatorInstance = await PremiumCalculator.new()
     })
 
-    it('...should be claimable', async function() {
-      const batteryWearLevel = 20
+    it('...should be claimable', async function () {
+      const batteryWearLevel = "20"
 
-      const isClaimable = await premiumCalculatorInstance.isClaimable(batteryWearLevel, { from: accounts[0] })
+      const isClaimable = await premiumCalculatorInstance.isClaimable(batteryWearLevel, {
+        from: accounts[0]
+      })
 
       assert.equal(isClaimable, true)
     })
 
-    it('...should not be claimable', async function() {
-      const batteryWearLevel = 31
+    it('...should not be claimable', async function () {
+      const batteryWearLevel = "31"
 
-      const isClaimable = await premiumCalculatorInstance.isClaimable(batteryWearLevel, { from: accounts[0] })
+      const isClaimable = await premiumCalculatorInstance.isClaimable(batteryWearLevel, {
+        from: accounts[0]
+      })
 
       assert.equal(isClaimable, false)
     })

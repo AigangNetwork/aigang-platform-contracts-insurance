@@ -21,8 +21,8 @@ interface IPremiumCalculator {
             view 
             returns (bytes2);
     
-    function isClaimable(int8 _batteryWearLevel
-    ) external pure returns (bool);
+    function isClaimable(string _batteryWearLevel
+    ) pure returns (bool);
 
     function getPayout(
     ) external view returns (uint);
@@ -81,6 +81,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
     bytes2[] public notValid;
     
     using SafeMath for uint;
+    using Strings for string;
 
     function getPayout() external view returns (uint) {
         return payout;
@@ -96,10 +97,10 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         
         uint cof = getCoefficientMultiplier(_deviceBrand, _region, _batteryWearLevel);
 
-        premium = basePremium * cof;
+        premium = basePremium.mul(cof);
         cof = getIntervalCoefficientMultiplier(_currentChargeLevel, _deviceAgeInMonths, _batteryDesignCapacity);
         
-        premium = premium * cof;
+        premium = premium.mul(cof);
 
         // uint(100)**TOTAL_COEFFICIENTS is due to each cofficient multiplied by 100 
         premium = premium.mul(100 + loading).div(100).div(uint(100)**TOTAL_COEFFICIENTS);  
@@ -152,7 +153,8 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         coefficientIntervals[DESIGN_CAPACITY].push(Interval(3000, 4000, 100));
 
         // CHARGE LEVEL
-        coefficientIntervals[CHARGE_LEVEL].push(Interval(0, 10, 120));
+        coefficientIntervals[CHARGE_LEVEL].push(Interval(1, 1, 120));
+        coefficientIntervals[CHARGE_LEVEL].push(Interval(1, 10, 120));
         coefficientIntervals[CHARGE_LEVEL].push(Interval(10, 20, 110));
         coefficientIntervals[CHARGE_LEVEL].push(Interval(20, 30, 105));
         coefficientIntervals[CHARGE_LEVEL].push(Interval(30, 100, 100));
@@ -236,8 +238,8 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
             batteryWearLevelMultiplier = coefficients[WEAR_LEVEL][_batteryWearLevel];
         }
         coefficient = deviceBrandMultiplier 
-                    * regionMultiplier
-                    * batteryWearLevelMultiplier;
+                .mul(regionMultiplier)
+                .mul(batteryWearLevelMultiplier);
     }
 
     function getIntervalCoefficientMultiplier(uint _currentChargeLevel, uint _deviceAgeInMonths, uint _batteryDesignCapacity)
@@ -250,8 +252,8 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         uint deviceAgeInMonthsMultiplier = getIntervalCoefficient(DEVICE_AGE, _deviceAgeInMonths);
 
         result = chargeLevelMultiplier
-                    * deviceAgeInMonthsMultiplier
-                    * designCapacityMultiplier;
+                .mul(deviceAgeInMonthsMultiplier)
+                .mul(designCapacityMultiplier);
     }
 
     function getIntervalCoefficient(bytes2 _type, uint _value) 
@@ -259,15 +261,20 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
             view 
             returns (uint result) {
         for (uint i = 0; i < coefficientIntervals[_type].length; i++) {
+            // Check interval exmaple (0, 1] (0 -not included, 1 included)
             if (coefficientIntervals[_type][i].min < _value
                      && _value <= coefficientIntervals[_type][i].max) {
                 result = coefficientIntervals[_type][i].coefficient;
+                break;
             }
         }
     }
 
-    function isClaimable(int8 _batteryWearLevel) public pure returns (bool) {      
-        if(_batteryWearLevel <= 30) {
+    function isClaimable(string _batteryWearLevel) public pure returns (bool) {      
+        if(_batteryWearLevel.equal("0")
+            || _batteryWearLevel.equal("10") 
+            || _batteryWearLevel.equal("20") 
+            || _batteryWearLevel.equal("30")){
             return true;
         } else {
             return false;
@@ -340,6 +347,25 @@ library SafeMath {
     function div(uint a, uint b) internal pure returns (uint c) {
         require(b > 0);
         c = a / b;
+    }
+}
+
+library Strings {
+    function equal(string memory _a, string memory _b) pure public returns (bool) {
+        bytes memory a = bytes(_a);
+        bytes memory b = bytes(_b);
+       
+        if (a.length != b.length) {
+            return false;
+        }
+        
+        for (uint i = 0; i < a.length; i ++) {
+            if (a[i] != b[i]) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
 

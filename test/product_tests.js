@@ -30,8 +30,8 @@ contract('Product', accounts => {
     '0x4Ec993E1d6980d7471Ca26BcA67dE6C513165922'
   ]
 
-  describe('#initialize', async function() {
-    beforeEach(async function() {
+  describe('#initialize', async function () {
+    beforeEach(async function () {
       premiumCalculatorInstance = await PremiumCalculator.new()
       testTokenInstance = await TestToken.new()
       productInstance = await Product.new()
@@ -42,19 +42,31 @@ contract('Product', accounts => {
       now = Date.now()
       endDate = now + 60
 
-      await premiumCalculatorInstance.initialize(basePremium, loading, payout, { from: owner })
+      await premiumCalculatorInstance.initialize(basePremium, loading, payout, {
+        from: owner
+      })
     })
 
-    it('happy flow', async function() {
+    it('happy flow', async function () {
       await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
         from: owner
       })
 
-      let paused = await productInstance.paused({ from: owner })
-      let premiumCalculator = await productInstance.premiumCalculator({ from: owner })
-      let token = await productInstance.token({ from: owner })
-      let utcProductStartDate = await productInstance.utcProductStartDate({ from: owner })
-      let utcProductEndDate = await productInstance.utcProductEndDate({ from: owner })
+      let paused = await productInstance.paused({
+        from: owner
+      })
+      let premiumCalculator = await productInstance.premiumCalculator({
+        from: owner
+      })
+      let token = await productInstance.token({
+        from: owner
+      })
+      let utcProductStartDate = await productInstance.utcProductStartDate({
+        from: owner
+      })
+      let utcProductEndDate = await productInstance.utcProductEndDate({
+        from: owner
+      })
 
       assert.equal(paused, false)
       assert.equal(premiumCalculator, premiumCalculatorInstance.address)
@@ -62,7 +74,7 @@ contract('Product', accounts => {
       assert.equal(utcProductEndDate, endDate)
     })
 
-    it('throws than not owner', async function() {
+    it('throws than not owner', async function () {
       await tryCatch(
         productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
           from: nonOwner
@@ -70,9 +82,15 @@ contract('Product', accounts => {
         errTypes.revert
       )
 
-      let paused = await productInstance.paused({ from: nonOwner })
-      let utcProductStartDate = await productInstance.utcProductStartDate({ from: nonOwner })
-      let utcProductEndDate = await productInstance.utcProductEndDate({ from: nonOwner })
+      let paused = await productInstance.paused({
+        from: nonOwner
+      })
+      let utcProductStartDate = await productInstance.utcProductStartDate({
+        from: nonOwner
+      })
+      let utcProductEndDate = await productInstance.utcProductEndDate({
+        from: nonOwner
+      })
 
       assert.equal(paused, true)
       assert.equal(utcProductStartDate, 0)
@@ -80,8 +98,8 @@ contract('Product', accounts => {
     })
   })
 
-  describe('#policies', async function() {
-    beforeEach(async function() {
+  describe('#policies', async function () {
+    beforeEach(async function () {
       premiumCalculatorInstance = await PremiumCalculator.new()
       testTokenInstance = await TestToken.new()
       productInstance = await Product.new()
@@ -92,32 +110,43 @@ contract('Product', accounts => {
       now = Date.now()
       endDate = now + 6000
 
-      await premiumCalculatorInstance.initialize(basePremium, loading, payout, { from: owner })
+      await premiumCalculatorInstance.initialize(basePremium, loading, payout, {
+        from: owner
+      })
       await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
         from: owner
       })
     })
 
-    it('happy flow', async function() {
-      let id = 'productID1'
-      let p_owner = addresses[0]
+    it('happy flow', async function () {
+      let policyIdBytes = web3.fromAscii('firstID')
+      //let p_owner = addresses[0]
       let start = Date.now()
       let end = start + 100
       let calculatedPayOut = web3.toWei(1.6, 'ether')
       let properties = 'test 1'
 
-      //testTokenInstance = await TestToken.new()
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
 
-      await productInstance.addPolicy(id, start, end, calculatedPayOut, properties, { from: owner })
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
 
-      let policiesCount = await productInstance.policiesCount({ from: owner })
+      await productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, {
+        from: owner
+      })
+
+      let policiesCount = await productInstance.policiesCount({
+        from: owner
+      })
 
       assert.equal(policiesCount, 1)
     })
   })
 
-  describe('#payment', async function() {
-    beforeEach(async function() {
+  describe('#payment', async function () {
+    beforeEach(async function () {
       premiumCalculatorInstance = await PremiumCalculator.new()
       testTokenInstance = await TestToken.new()
       productInstance = await Product.new()
@@ -131,7 +160,7 @@ contract('Product', accounts => {
       await testTokenInstance.transfer(owner, web3.toWei(2000))
     })
 
-    it('happy flow', async function() {
+    it('happy flow', async function () {
       const premium = 300
       const paymentValue = web3.toWei(premium.toString(), 'ether')
       let policyIdBytes = web3.fromAscii('firstID')
@@ -151,7 +180,7 @@ contract('Product', accounts => {
       })
     })
 
-    it('throws that not valid policy owner', async function() {
+    it('throws that not valid policy owner', async function () {
       const premium = 300
       const paymentValue = web3.toWei(premium.toString(), 'ether')
       let policyIdBytes = web3.fromAscii('thirdID')

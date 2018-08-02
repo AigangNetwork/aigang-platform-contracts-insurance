@@ -20,21 +20,21 @@ contract Product is Owned, IProduct {
     event Cancel(bytes32 indexed _policyId, uint _amount);    
     event PremiumCalculatorChange(address _old, address _new);
     event PaymentReceived(bytes32 indexed _policyId, uint _amount);
+    event PolicyUpdatedManualy(bytes32 indexed _policyId);
 
     // TODO: limit policies or payouts amoun or others limits in code not contracts.    
     struct Policy {
         address owner;
         uint32 utcStart;
         uint32 utcEnd;
+        uint32 utcPayoutDate;
+        bool isCanceled;
         uint premium;
         uint calculatedPayout;
         string properties;
         // claim
         uint payout;
-        uint32 utcPayoutDate;
         string claimProperties;
-        bool isPaidOut;
-        bool isCanceled;
     }
     
     address public token;
@@ -64,6 +64,7 @@ contract Product is Owned, IProduct {
      modifier policyValidForPayout(bytes32 _policyId) {
         require(policies[_policyId].owner != address(0), "Owner is not valid");       
         require(policies[_policyId].payout == 0, "Payout already done");
+        require(policies[_policyId].isCanceled == false, "Policy already canceled");
         _;
     }
    
@@ -75,8 +76,14 @@ contract Product is Owned, IProduct {
         paused = false;
     }
 
-    function addPolicy(bytes32 _id, uint32 _utcStart, uint32 _utcEnd, uint _calculatedPayout, string _properties) public onlyAllowed notPaused {
-        // TODO add theck it is payed
+    function addPolicy(bytes32 _id, uint32 _utcStart, uint32 _utcEnd, uint _calculatedPayout, string _properties) 
+            public 
+            onlyAllowed 
+            notPaused {
+        require(policies[_id].premium > 0, "Policy is not payed");
+        require(policies[_id].utcStart == 0, "Policy is already set");
+        require(policies[_id].isCanceled == false, "Policy is already canceled");
+
         policies[_id].utcStart = _utcStart;
         policies[_id].utcEnd = _utcEnd;
         policies[_id].calculatedPayout = _calculatedPayout;
@@ -94,11 +101,11 @@ contract Product is Owned, IProduct {
             senderIsToken
             notPaused {
         require(_amountOfTokens > 0, "amount should be > 0");
-        bytes32 policyId = _data.bytesToBytes32();
-        policies[policyId].owner = _from;
+        require(_from != address(0), "not valid from");
 
-        require(policies[policyId].owner != address(0), "not valid policy owner");
-        require(policies[policyId].premium == 0, "not valid policyId");
+        bytes32 policyId = _data.bytesToBytes32();
+
+        require(policies[policyId].premium == 0, "policy is paid and laready exist");
 
         // Transfer tokens from sender to this contract
         require(IERC20(token).transferFrom(_from, address(this), _amountOfTokens), "Tokens transfer failed.");
@@ -116,7 +123,6 @@ contract Product is Owned, IProduct {
       
         require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayout, "Contract balance is to low");
 
-        policies[_policyId].isPaidOut = true;
         policies[_policyId].utcPayoutDate = uint32(now);
         policies[_policyId].payout = policies[_policyId].calculatedPayout;
         policies[_policyId].claimProperties = _properties;
@@ -133,18 +139,9 @@ contract Product is Owned, IProduct {
             onlyAllowed 
             notPaused
             policyValidForPayout(_policyId) {
-
-        require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayout, "Contract balance is to low");
-
+                
         policies[_policyId].isCanceled = true;
-        policies[_policyId].utcPayoutDate = uint32(now);
-        policies[_policyId].payout = policies[_policyId].premium;
-
-        policiesPayoutsCount++;
-        policiesTotalPayouts = policiesTotalPayouts.add(policies[_policyId].payout);
-
-        assert(IERC20(token).transfer(policies[_policyId].owner, policies[_policyId].payout));
-
+       
         emit Cancel(_policyId, policies[_policyId].payout);
     }
 
@@ -152,7 +149,6 @@ contract Product is Owned, IProduct {
         emit PremiumCalculatorChange(premiumCalculator, _newCalculator);
         premiumCalculator = _newCalculator;
     }      
-    
 
     //////////
     // Safety Methods
@@ -160,6 +156,45 @@ contract Product is Owned, IProduct {
     function () public payable {
         require(false);
     }
+
+    function updatePolicy(
+        bytes32 _policyId,
+        address _owner,
+        uint32 _utcStart,
+        uint32 _utcEnd,
+        uint _premium,
+        uint _calculatedPayout,
+        bool _isCanceled) 
+            external 
+            onlyOwner {
+        
+        policies[_policyId].owner = _owner;
+        policies[_policyId].utcStart = _utcStart;
+        policies[_policyId].utcEnd = _utcEnd;
+        policies[_policyId].premium = _premium;
+        policies[_policyId].calculatedPayout = _calculatedPayout;
+        policies[_policyId].isCanceled = _isCanceled;
+
+        emit PolicyUpdatedManualy(_policyId);
+    }
+
+    function updatePolicy2(
+        bytes32 _policyId,
+        string _properties,
+        uint _payout,
+        uint32 _utcPayoutDate,
+        string _claimProperties) 
+            external 
+            onlyOwner {
+        
+        policies[_policyId].properties = _properties;
+        policies[_policyId].payout = _payout;
+        policies[_policyId].utcPayoutDate = _utcPayoutDate;
+        policies[_policyId].claimProperties = _claimProperties;
+  
+        emit PolicyUpdatedManualy(_policyId);
+    }
+
 
    function tokenBalance() public view returns (uint) {
          return IERC20(token).balanceOf(this);
