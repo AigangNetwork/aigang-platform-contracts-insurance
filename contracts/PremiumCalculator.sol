@@ -192,125 +192,8 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         coefficients[REGION]["SI"] = 100;
         coefficients[REGION]["NL"] = 100;
         coefficients[REGION]["IE"] = 100;
-
-        coefficients[REGION]["BG"] = 105;
-        coefficients[REGION]["ME"] = 105;
-        coefficients[REGION]["NZ"] = 105;
-        coefficients[REGION]["RS"] = 105;
-        coefficients[REGION]["FR"] = 105;
-        coefficients[REGION]["HR"] = 105;
-        coefficients[REGION]["TR"] = 105;
-        coefficients[REGION]["JP"] = 105;
-        coefficients[REGION]["AL"] = 105;
-        coefficients[REGION]["KR"] = 105;
-        coefficients[REGION]["LS"] = 105;
-        coefficients[REGION]["SM"] = 105;
-        coefficients[REGION]["AZ"] = 105;
-        coefficients[REGION]["UZ"] = 105;
-        coefficients[REGION]["AF"] = 105;
-        coefficients[REGION]["MM"] = 105;
-        coefficients[REGION]["ES"] = 105;
-        coefficients[REGION]["IT"] = 105;
-        coefficients[REGION]["MC"] = 105;
-        coefficients[REGION]["AR"] = 105;
-        coefficients[REGION]["TM"] = 105;
-        coefficients[REGION]["PT"] = 105;
-        coefficients[REGION]["GR"] = 105;
-        coefficients[REGION]["LB"] = 105;
-        coefficients[REGION]["MA"] = 105;
-        coefficients[REGION]["IR"] = 105;
-        coefficients[REGION]["UY"] = 105;
-        coefficients[REGION]["ZA"] = 105;
-        coefficients[REGION]["SY"] = 105;
-        coefficients[REGION]["RW"] = 105;
-        coefficients[REGION]["JO"] = 105;
-        coefficients[REGION]["CY"] = 105;
-        coefficients[REGION]["IL"] = 105;
-        coefficients[REGION]["MT"] = 105;
-        coefficients[REGION]["TN"] = 105;
-        coefficients[REGION]["PE"] = 105;
-        coefficients[REGION]["BI"] = 105;
-        coefficients[REGION]["NA"] = 105;
-
-        coefficients[REGION]["PK"] = 110;
-        coefficients[REGION]["MX"] = 110;
-        coefficients[REGION]["ZW"] = 110;
-        coefficients[REGION]["IQ"] = 110;
-        coefficients[REGION]["SZ"] = 110;
-        coefficients[REGION]["ZM"] = 110;
-        coefficients[REGION]["BW"] = 110;
-        coefficients[REGION]["AO"] = 110;
-        coefficients[REGION]["BO"] = 110;
-        coefficients[REGION]["AU"] = 110;
-        coefficients[REGION]["LY"] = 110;
-        coefficients[REGION]["EC"] = 110;
-        coefficients[REGION]["MW"] = 110;
-        coefficients[REGION]["EG"] = 110;
-        coefficients[REGION]["ET"] = 110;
-        coefficients[REGION]["DM"] = 110;
-        coefficients[REGION]["TZ"] = 110;
-        coefficients[REGION]["MU"] = 110;
-        coefficients[REGION]["DZ"] = 110;
-        coefficients[REGION]["MG"] = 110;
-        coefficients[REGION]["LA"] = 110;
-        coefficients[REGION]["UG"] = 110;
-        coefficients[REGION]["CV"] = 110;
-        coefficients[REGION]["GT"] = 110;
-        coefficients[REGION]["HN"] = 110;
-        coefficients[REGION]["PY"] = 110;
-        coefficients[REGION]["IN"] = 110;
-        coefficients[REGION]["ST"] = 110;
-        coefficients[REGION]["MZ"] = 110;
-        coefficients[REGION]["YE"] = 110;
-        coefficients[REGION]["VU"] = 110;
-        coefficients[REGION]["CD"] = 110;
-        coefficients[REGION]["FJ"] = 110;
-        coefficients[REGION]["SV"] = 110;
-        coefficients[REGION]["VN"] = 110;
-        coefficients[REGION]["CO"] = 110;
-        coefficients[REGION]["KN"] = 110;
-        coefficients[REGION]["CG"] = 110;
-
-        coefficients[REGION]["BD"] = 120;
-        coefficients[REGION]["GA"] = 120;
-        coefficients[REGION]["CU"] = 120;
-        coefficients[REGION]["TL"] = 120;
-        coefficients[REGION]["PG"] = 120;
-        coefficients[REGION]["TO"] = 120;
-        coefficients[REGION]["BZ"] = 120;
-        coefficients[REGION]["LR"] = 120;
-        coefficients[REGION]["KW"] = 120;
-        coefficients[REGION]["VE"] = 120;
-        coefficients[REGION]["MY"] = 120;
-        coefficients[REGION]["PA"] = 120;
-        coefficients[REGION]["ER"] = 120;
-        coefficients[REGION]["LC"] = 120;
-        coefficients[REGION]["KM"] = 120;
-        coefficients[REGION]["OM"] = 120;
-        coefficients[REGION]["SB"] = 120;
-        coefficients[REGION]["GN"] = 120;
-        coefficients[REGION]["SR"] = 120;
-        coefficients[REGION]["TT"] = 120;
-        coefficients[REGION]["ID"] = 120;
-        coefficients[REGION]["FM"] = 120;
-        coefficients[REGION]["PH"] = 120;
-        coefficients[REGION]["AG"] = 120;
-        coefficients[REGION]["BB"] = 120;
-        coefficients[REGION]["GY"] = 120;
-        coefficients[REGION]["SL"] = 120;
-        coefficients[REGION]["TH"] = 120;
-        coefficients[REGION]["CI"] = 120;
-        coefficients[REGION]["SG"] = 120;
-        coefficients[REGION]["TD"] = 120;
-        coefficients[REGION]["GD"] = 120;
-        coefficients[REGION]["WS"] = 120;
-        coefficients[REGION]["GW"] = 120;
-        coefficients[REGION]["KH"] = 120;
-        coefficients[REGION]["NG"] = 120;
-        coefficients[REGION]["VC"] = 120;
-        coefficients[REGION]["BN"] = 120;
         
-        coefficients[REGION][OTHERS] = 0;
+        coefficients[REGION][OTHERS] = 115;
 
         // WEAR LEVEL
         coefficients[WEAR_LEVEL]["100"] = 100;
@@ -385,17 +268,26 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         }
     }
 
-    function setIntervalCoefficient(bytes2 _type, uint _minValue, uint _maxValue, uint _coefficient) external onlyOwner {
-        for (uint i = 0; i < coefficientIntervals[_type].length; i++) {
-            if (coefficientIntervals[_type][i].coefficient == _coefficient) {
-                emit IntervalCoefficientSet(_type, _minValue, _maxValue, _coefficient);
-                coefficientIntervals[_type][i].min = _minValue;
-                coefficientIntervals[_type][i].max = _maxValue;
-                return;
-            }
+    function setIntervalCoefficient(
+            bytes2 _type, 
+            uint _index, 
+            bool _insert, // 1 insert, 0 update
+            uint _minValue, 
+            uint _maxValue, 
+            uint _coefficient
+            ) 
+            external 
+            onlyOwner {
+
+        if (_insert){
+            emit IntervalCoefficientSet(_type, _minValue, _maxValue, _coefficient);
+            coefficientIntervals[_type].push(Interval(_minValue, _maxValue, _coefficient));
+        } else {
+            emit IntervalCoefficientSet(_type, _minValue, _maxValue, _coefficient);
+            coefficientIntervals[_type][_index].min = _minValue;
+            coefficientIntervals[_type][_index].max = _maxValue;
+            coefficientIntervals[_type][_index].coefficient = _coefficient;
         }
-        emit IntervalCoefficientSet(_type, _minValue, _maxValue, _coefficient);
-        coefficientIntervals[_type].push(Interval(_minValue, _maxValue, _coefficient));
     }
 
     function setCoefficient(bytes2 _type, string _key, uint _coefficient) external onlyOwner {

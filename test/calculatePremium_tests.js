@@ -15,8 +15,8 @@ contract('PremiumCalculator', function (accounts) {
     const batteryDesignCapacity = 3500 // 1
     const currentChargeLevel = 40 // 1
     const deviceAgeInMonths = 1 // 0.9
-    const region = 'fi' // 1
-    const deviceBrand = 'huawei' // 1
+    const region = 'FI' // 1
+    const deviceBrand = 'HUAWEI' // 1
     const batteryWearLevel = '100' // 1
 
     // premium = 0.000001 * 1 * 0.9 * 0.95 * 1 * 1 * 1 * 1 = 0.000000855
@@ -52,9 +52,9 @@ contract('PremiumCalculator', function (accounts) {
 
     const batteryDesignCapacity = 3500 // 1
     const currentChargeLevel = 5 // 1.2
-    const deviceAgeInMonths = 71 // 1.2
-    const region = 'fi' // 1
-    const deviceBrand = 'elephone' // 1.1
+    const deviceAgeInMonths = 60 // 1.2
+    const region = 'FI' // 1
+    const deviceBrand = 'ELEPHONE' // 1.1
     const batteryWearLevel = '100' // 1
 
     // premium = 999999.999999 * 1 * 1.2 * 1.2 * 1.1 * 1 * 1.1 * 1 * 1 = 1742399.99999826
@@ -93,9 +93,9 @@ contract('PremiumCalculator', function (accounts) {
     it('happy flow', async function () {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
-      const deviceAgeInMonths = 71
-      const region = 'ca'
-      const deviceBrand = 'samsung'
+      const deviceAgeInMonths = 60
+      const region = 'CA'
+      const deviceBrand = 'SAMSUNG'
       const batteryWearLevel = '100'
 
       const result = await premiumCalculatorInstance.validate(
@@ -116,8 +116,8 @@ contract('PremiumCalculator', function (accounts) {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 71
-      const region = 'fi'
-      const deviceBrand = 'elephone'
+      const region = 'FI'
+      const deviceBrand = 'ELEPHONE'
       const batteryWearLevel = '0'
 
       const notValid = await premiumCalculatorInstance.validate(
@@ -138,8 +138,8 @@ contract('PremiumCalculator', function (accounts) {
       const batteryDesignCapacity = 0
       const currentChargeLevel = 5
       const deviceAgeInMonths = 71
-      const region = 'ca'
-      const deviceBrand = 'samsung'
+      const region = 'CA'
+      const deviceBrand = 'SAMSUNG'
       const batteryWearLevel = '100'
 
       const result = await premiumCalculatorInstance.validate(
@@ -160,8 +160,8 @@ contract('PremiumCalculator', function (accounts) {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 0
       const deviceAgeInMonths = 71
-      const region = 'ca'
-      const deviceBrand = 'samsung'
+      const region = 'CA'
+      const deviceBrand = 'SAMSUNG'
       const batteryWearLevel = '100'
 
       const result = await premiumCalculatorInstance.validate(
@@ -182,8 +182,8 @@ contract('PremiumCalculator', function (accounts) {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 73
-      const region = 'ca'
-      const deviceBrand = 'samsung'
+      const region = 'CA'
+      const deviceBrand = 'SAMSUNG'
       const batteryWearLevel = '100'
 
       const result = await premiumCalculatorInstance.validate(
@@ -205,7 +205,7 @@ contract('PremiumCalculator', function (accounts) {
       const currentChargeLevel = 5
       const deviceAgeInMonths = 3
       const region = 'G'
-      const deviceBrand = 'samsung'
+      const deviceBrand = 'SAMSUNG'
       const batteryWearLevel = '100'
 
       const result = await premiumCalculatorInstance.validate(
@@ -226,8 +226,8 @@ contract('PremiumCalculator', function (accounts) {
       const batteryDesignCapacity = 3500 // 1
       const currentChargeLevel = 5 // 1.2
       const deviceAgeInMonths = 3 // 1.2
-      const region = 'ca' // 1
-      const deviceBrand = 'samsung' // 1.1
+      const region = 'FI' // 1
+      const deviceBrand = 'SAMSUNG' // 1.1
       const batteryWearLevel = '30' // 1
 
       const result = await premiumCalculatorInstance.validate(
@@ -263,8 +263,8 @@ contract('PremiumCalculator', function (accounts) {
       const batteryDesignCapacity = 3500 // 1
       const currentChargeLevel = 99 // 1
       const deviceAgeInMonths = 7 // 1
-      const region = 'fi' // 1
-      const deviceBrand = 'samsung' // 1
+      const region = 'FI' // 1
+      const deviceBrand = 'SAMSUNG' // 1
       const batteryWearLevel = '100' // 1
       const type = 'DC'
       const coefficient = 100
@@ -291,8 +291,8 @@ contract('PremiumCalculator', function (accounts) {
       const batteryDesignCapacity = 3500 // 1
       const currentChargeLevel = 99 // 1
       const deviceAgeInMonths = 7 // 1
-      const region = 'fi' // 1
-      const deviceBrand = 'samsung' // 1
+      const region = 'FI' // 1
+      const deviceBrand = 'SAMSUNG' // 1
       const batteryWearLevel = '100' // 1
       const type = 'R'
       const newCoefficient = 200
@@ -319,15 +319,18 @@ contract('PremiumCalculator', function (accounts) {
       const batteryDesignCapacity = 2500 // 1
       const currentChargeLevel = 99 // 1
       const deviceAgeInMonths = 7 // 1
-      const region = 'fi' // 1
-      const deviceBrand = 'samsung' // 1
+      const region = 'FI' // 1
+      const deviceBrand = 'SAMSUNG' // 1
       const batteryWearLevel = '100' // 1
+
       const type = 'DC'
-      const minValue = 2000
-      const maxValue = 5000
+      const index = 0
+      const insert = false // 1 insert, 0 update
+      const minValue = 1000
+      const maxValue = 3000
       const coefficient = 100
 
-      await premiumCalculatorInstance.setIntervalCoefficient(type, minValue, maxValue, coefficient)
+      await premiumCalculatorInstance.setIntervalCoefficient(type,index,insert, minValue, maxValue, coefficient)
 
       const premium = await premiumCalculatorInstance.calculatePremium(
         batteryDesignCapacity,
