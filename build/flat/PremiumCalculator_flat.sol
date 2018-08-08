@@ -56,8 +56,8 @@ contract Owned {
 
 contract PremiumCalculator is Owned, IPremiumCalculator {
     uint public basePremium; // AIX in weis
-    uint public payout;
-    uint public loading;
+    uint public payout; // All payouts are equal (AIX in weis)
+    uint public loading; // Office fee in percents. example from 1 to 100
 
     struct Interval {
         uint min;
@@ -69,7 +69,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
     mapping (bytes2 => Interval[]) coefficientIntervals;
     uint constant TOTAL_COEFFICIENTS = 6;
    
-    string constant DEFAULT = "default";
+    string constant OTHERS = "OTHERS";
     bytes2 constant DESIGN_CAPACITY = "DC";  
     bytes2 constant CHARGE_LEVEL = "CL";  
     bytes2 constant DEVICE_AGE = "DA"; // in months
@@ -150,83 +150,200 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         payout = _payout;
 
         // BATTERY DESIGN CAPACITY
+        coefficientIntervals[DESIGN_CAPACITY].push(Interval(1000, 3000, 110));
         coefficientIntervals[DESIGN_CAPACITY].push(Interval(3000, 4000, 100));
+        coefficientIntervals[DESIGN_CAPACITY].push(Interval(4000, 6000, 110));
 
         // CHARGE LEVEL
-        coefficientIntervals[CHARGE_LEVEL].push(Interval(1, 1, 120));
         coefficientIntervals[CHARGE_LEVEL].push(Interval(1, 10, 120));
         coefficientIntervals[CHARGE_LEVEL].push(Interval(10, 20, 110));
         coefficientIntervals[CHARGE_LEVEL].push(Interval(20, 30, 105));
         coefficientIntervals[CHARGE_LEVEL].push(Interval(30, 100, 100));
     
         // DEVICE BRAND
-        coefficients[DEVICE_BRAND]["huawei"] = 100;
-        coefficients[DEVICE_BRAND]["samsung"] = 100;
-        coefficients[DEVICE_BRAND]["xiaomi"] = 100;
-        coefficients[DEVICE_BRAND]["oppo"] = 105;
-        coefficients[DEVICE_BRAND]["vivo"] = 105;
-        coefficients[DEVICE_BRAND][DEFAULT] = 110;
+        coefficients[DEVICE_BRAND]["HUAWEI"] = 100;
+        coefficients[DEVICE_BRAND]["SAMSUNG"] = 100;
+        coefficients[DEVICE_BRAND]["XIAOMI"] = 100;
+        coefficients[DEVICE_BRAND]["OPPO"] = 105;
+        coefficients[DEVICE_BRAND]["VIVO"] = 105;
+        coefficients[DEVICE_BRAND][OTHERS] = 110;
 
         // DEVICE AGE IN MONTHS
         coefficientIntervals[DEVICE_AGE].push(Interval(0, 6, 90));
         coefficientIntervals[DEVICE_AGE].push(Interval(6, 12, 100));
         coefficientIntervals[DEVICE_AGE].push(Interval(12, 24, 110));
-        coefficientIntervals[DEVICE_AGE].push(Interval(24, 72, 120));
+        coefficientIntervals[DEVICE_AGE].push(Interval(24, 60, 120));
 
         // REGION
-        coefficients[REGION]["ca"] = 100;
-        coefficients[REGION]["ru"] = 100;
-        coefficients[REGION]["mn"] = 100;
-        coefficients[REGION]["no"] = 100;
-        coefficients[REGION]["kg"] = 100;
-        coefficients[REGION]["fi"] = 100;
-        coefficients[REGION]["is"] = 100;
-        coefficients[REGION]["tj"] = 100;
-        coefficients[REGION]["se"] = 100;
-        coefficients[REGION]["ee"] = 100;
-        coefficients[REGION]["ch"] = 100;
-        coefficients[REGION]["lv"] = 100;
-        coefficients[REGION]["li"] = 100;
-        coefficients[REGION]["kp"] = 100;
-        coefficients[REGION]["ge"] = 100;
-        coefficients[REGION]["by"] = 100;
-        coefficients[REGION]["lt"] = 100;
-        coefficients[REGION]["at"] = 100;
-        coefficients[REGION]["kz"] = 100;
-        coefficients[REGION]["sk"] = 100;
-        coefficients[REGION]["cn"] = 100;
-        coefficients[REGION]["am"] = 100;
-        coefficients[REGION]["bt"] = 100;
-        coefficients[REGION]["dk"] = 100;
-        coefficients[REGION]["cz"] = 100;
-        coefficients[REGION]["ad"] = 100;
-        coefficients[REGION]["pl"] = 100;
-        coefficients[REGION]["np"] = 100;
-        coefficients[REGION]["ua"] = 100;
-        coefficients[REGION]["cl"] = 100;
-        coefficients[REGION]["gb"] = 100;
-        coefficients[REGION]["de"] = 100;
-        coefficients[REGION]["us"] = 100;
-        coefficients[REGION]["lu"] = 100;
-        coefficients[REGION]["ro"] = 100;
-        coefficients[REGION]["si"] = 100;
-        coefficients[REGION]["nl"] = 100;
-        coefficients[REGION]["ie"] = 100;
-        // TODO: add others
-        coefficients[REGION][DEFAULT] = 0;
+        coefficients[REGION]["CA"] = 100;
+        coefficients[REGION]["RU"] = 100;
+        coefficients[REGION]["MN"] = 100;
+        coefficients[REGION]["NO"] = 100;
+        coefficients[REGION]["KG"] = 100;
+        coefficients[REGION]["FI"] = 100;
+        coefficients[REGION]["IS"] = 100;
+        coefficients[REGION]["TJ"] = 100;
+        coefficients[REGION]["SE"] = 100;
+        coefficients[REGION]["EE"] = 100;
+        coefficients[REGION]["CH"] = 100;
+        coefficients[REGION]["LV"] = 100;
+        coefficients[REGION]["LI"] = 100;
+        coefficients[REGION]["KP"] = 100;
+        coefficients[REGION]["GE"] = 100;
+        coefficients[REGION]["BY"] = 100;
+        coefficients[REGION]["LT"] = 100;
+        coefficients[REGION]["AT"] = 100;
+        coefficients[REGION]["KZ"] = 100;
+        coefficients[REGION]["SK"] = 100;
+        coefficients[REGION]["CN"] = 100;
+        coefficients[REGION]["AM"] = 100;
+        coefficients[REGION]["BT"] = 100;
+        coefficients[REGION]["DK"] = 100;
+        coefficients[REGION]["CZ"] = 100;
+        coefficients[REGION]["AD"] = 100;
+        coefficients[REGION]["PL"] = 100;
+        coefficients[REGION]["NP"] = 100;
+        coefficients[REGION]["UA"] = 100;
+        coefficients[REGION]["CL"] = 100;
+        coefficients[REGION]["GB"] = 100;
+        coefficients[REGION]["DE"] = 100;
+        coefficients[REGION]["US"] = 100;
+        coefficients[REGION]["LU"] = 100;
+        coefficients[REGION]["RO"] = 100;
+        coefficients[REGION]["SI"] = 100;
+        coefficients[REGION]["NL"] = 100;
+        coefficients[REGION]["IE"] = 100;
+
+        coefficients[REGION]["BG"] = 105;
+        coefficients[REGION]["ME"] = 105;
+        coefficients[REGION]["NZ"] = 105;
+        coefficients[REGION]["RS"] = 105;
+        coefficients[REGION]["FR"] = 105;
+        coefficients[REGION]["HR"] = 105;
+        coefficients[REGION]["TR"] = 105;
+        coefficients[REGION]["JP"] = 105;
+        coefficients[REGION]["AL"] = 105;
+        coefficients[REGION]["KR"] = 105;
+        coefficients[REGION]["LS"] = 105;
+        coefficients[REGION]["SM"] = 105;
+        coefficients[REGION]["AZ"] = 105;
+        coefficients[REGION]["UZ"] = 105;
+        coefficients[REGION]["AF"] = 105;
+        coefficients[REGION]["MM"] = 105;
+        coefficients[REGION]["ES"] = 105;
+        coefficients[REGION]["IT"] = 105;
+        coefficients[REGION]["MC"] = 105;
+        coefficients[REGION]["AR"] = 105;
+        coefficients[REGION]["TM"] = 105;
+        coefficients[REGION]["PT"] = 105;
+        coefficients[REGION]["GR"] = 105;
+        coefficients[REGION]["LB"] = 105;
+        coefficients[REGION]["MA"] = 105;
+        coefficients[REGION]["IR"] = 105;
+        coefficients[REGION]["UY"] = 105;
+        coefficients[REGION]["ZA"] = 105;
+        coefficients[REGION]["SY"] = 105;
+        coefficients[REGION]["RW"] = 105;
+        coefficients[REGION]["JO"] = 105;
+        coefficients[REGION]["CY"] = 105;
+        coefficients[REGION]["IL"] = 105;
+        coefficients[REGION]["MT"] = 105;
+        coefficients[REGION]["TN"] = 105;
+        coefficients[REGION]["PE"] = 105;
+        coefficients[REGION]["BI"] = 105;
+        coefficients[REGION]["NA"] = 105;
+
+        coefficients[REGION]["PK"] = 110;
+        coefficients[REGION]["MX"] = 110;
+        coefficients[REGION]["ZW"] = 110;
+        coefficients[REGION]["IQ"] = 110;
+        coefficients[REGION]["SZ"] = 110;
+        coefficients[REGION]["ZM"] = 110;
+        coefficients[REGION]["BW"] = 110;
+        coefficients[REGION]["AO"] = 110;
+        coefficients[REGION]["BO"] = 110;
+        coefficients[REGION]["AU"] = 110;
+        coefficients[REGION]["LY"] = 110;
+        coefficients[REGION]["EC"] = 110;
+        coefficients[REGION]["MW"] = 110;
+        coefficients[REGION]["EG"] = 110;
+        coefficients[REGION]["ET"] = 110;
+        coefficients[REGION]["DM"] = 110;
+        coefficients[REGION]["TZ"] = 110;
+        coefficients[REGION]["MU"] = 110;
+        coefficients[REGION]["DZ"] = 110;
+        coefficients[REGION]["MG"] = 110;
+        coefficients[REGION]["LA"] = 110;
+        coefficients[REGION]["UG"] = 110;
+        coefficients[REGION]["CV"] = 110;
+        coefficients[REGION]["GT"] = 110;
+        coefficients[REGION]["HN"] = 110;
+        coefficients[REGION]["PY"] = 110;
+        coefficients[REGION]["IN"] = 110;
+        coefficients[REGION]["ST"] = 110;
+        coefficients[REGION]["MZ"] = 110;
+        coefficients[REGION]["YE"] = 110;
+        coefficients[REGION]["VU"] = 110;
+        coefficients[REGION]["CD"] = 110;
+        coefficients[REGION]["FJ"] = 110;
+        coefficients[REGION]["SV"] = 110;
+        coefficients[REGION]["VN"] = 110;
+        coefficients[REGION]["CO"] = 110;
+        coefficients[REGION]["KN"] = 110;
+        coefficients[REGION]["CG"] = 110;
+
+        coefficients[REGION]["BD"] = 120;
+        coefficients[REGION]["GA"] = 120;
+        coefficients[REGION]["CU"] = 120;
+        coefficients[REGION]["TL"] = 120;
+        coefficients[REGION]["PG"] = 120;
+        coefficients[REGION]["TO"] = 120;
+        coefficients[REGION]["BZ"] = 120;
+        coefficients[REGION]["LR"] = 120;
+        coefficients[REGION]["KW"] = 120;
+        coefficients[REGION]["VE"] = 120;
+        coefficients[REGION]["MY"] = 120;
+        coefficients[REGION]["PA"] = 120;
+        coefficients[REGION]["ER"] = 120;
+        coefficients[REGION]["LC"] = 120;
+        coefficients[REGION]["KM"] = 120;
+        coefficients[REGION]["OM"] = 120;
+        coefficients[REGION]["SB"] = 120;
+        coefficients[REGION]["GN"] = 120;
+        coefficients[REGION]["SR"] = 120;
+        coefficients[REGION]["TT"] = 120;
+        coefficients[REGION]["ID"] = 120;
+        coefficients[REGION]["FM"] = 120;
+        coefficients[REGION]["PH"] = 120;
+        coefficients[REGION]["AG"] = 120;
+        coefficients[REGION]["BB"] = 120;
+        coefficients[REGION]["GY"] = 120;
+        coefficients[REGION]["SL"] = 120;
+        coefficients[REGION]["TH"] = 120;
+        coefficients[REGION]["CI"] = 120;
+        coefficients[REGION]["SG"] = 120;
+        coefficients[REGION]["TD"] = 120;
+        coefficients[REGION]["GD"] = 120;
+        coefficients[REGION]["WS"] = 120;
+        coefficients[REGION]["GW"] = 120;
+        coefficients[REGION]["KH"] = 120;
+        coefficients[REGION]["NG"] = 120;
+        coefficients[REGION]["VC"] = 120;
+        coefficients[REGION]["BN"] = 120;
+        
+        coefficients[REGION][OTHERS] = 0;
 
         // WEAR LEVEL
         coefficients[WEAR_LEVEL]["100"] = 100;
-        coefficients[WEAR_LEVEL][DEFAULT] = 0;
     }
 
     function getCoefficientMultiplier(string _deviceBrand, string _region, string _batteryWearLevel) 
             public 
             view 
             returns (uint coefficient) {
-        uint deviceBrandMultiplier = coefficients[DEVICE_BRAND][DEFAULT];
-        uint regionMultiplier = coefficients[REGION][DEFAULT];
-        uint batteryWearLevelMultiplier = coefficients[WEAR_LEVEL][DEFAULT];
+        uint deviceBrandMultiplier = coefficients[DEVICE_BRAND][OTHERS];
+        uint regionMultiplier = coefficients[REGION][OTHERS];
+        uint batteryWearLevelMultiplier = coefficients[WEAR_LEVEL][OTHERS];
 
         if (coefficients[DEVICE_BRAND][_deviceBrand] != 0) {
             deviceBrandMultiplier = coefficients[DEVICE_BRAND][_deviceBrand];
@@ -271,8 +388,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
     }
 
     function isClaimable(string _batteryWearLevel) public pure returns (bool) {      
-        if(_batteryWearLevel.equal("0")
-            || _batteryWearLevel.equal("10") 
+        if(_batteryWearLevel.equal("10") 
             || _batteryWearLevel.equal("20") 
             || _batteryWearLevel.equal("30")){
             return true;
