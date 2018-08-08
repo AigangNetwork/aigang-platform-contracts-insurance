@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 library Strings {
-    function equal(string memory _a, string memory _b) pure public returns (bool) {
+    function equal(string memory _a, string memory _b) pure internal returns (bool) {
         bytes memory a = bytes(_a);
         bytes memory b = bytes(_b);
        

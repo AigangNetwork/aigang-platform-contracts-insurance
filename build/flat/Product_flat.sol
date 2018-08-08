@@ -27,9 +27,9 @@ contract Owned {
     address public owner;
     address public executor;
     address public newOwner;
-    address public newExecutor;
   
     event OwnershipTransferred(address indexed _from, address indexed _to);
+    event ExecutorTransferred(address indexed _from, address indexed _to);
 
     constructor() public {
         owner = msg.sender;
@@ -51,20 +51,14 @@ contract Owned {
     }
 
     function transferExecutorOwnership(address _newExecutor) public onlyOwner {
-        newExecutor = _newExecutor;
+        emit ExecutorTransferred(executor, _newExecutor);
+        executor = _newExecutor;
     }
 
     function acceptOwnership() public {
         require(msg.sender == newOwner);
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
-        newOwner = address(0);
-    }
-
-     function acceptExecutorOwnership() public {
-        require(msg.sender == newExecutor);
-        emit OwnershipTransferred(executor, newExecutor);
-        executor = newExecutor;
         newOwner = address(0);
     }
 }
