@@ -112,13 +112,13 @@ contract('PremiumCalculator', function (accounts) {
       assert.equal(web3.toUtf8(result), '')
     })
 
-    it('DEVICE_BRAND should fail', async function () {
+    it('DEVICE_BRAND should not fail', async function () {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
-      const deviceAgeInMonths = 71
+      const deviceAgeInMonths = 15
       const region = 'FI'
       const deviceBrand = 'ELEPHONE'
-      const batteryWearLevel = '0'
+      const batteryWearLevel = '100'
 
       const notValid = await premiumCalculatorInstance.validate(
         batteryDesignCapacity,
@@ -131,7 +131,7 @@ contract('PremiumCalculator', function (accounts) {
         }
       )
 
-      assert.equal(web3.toUtf8(notValid), 'DB')
+      assert.equal(web3.toUtf8(notValid), '')
     })
 
     it('DESIGN_CAPACITY should fail', async function () {
@@ -200,7 +200,7 @@ contract('PremiumCalculator', function (accounts) {
       assert.equal(web3.toUtf8(result), 'DA')
     })
 
-    it('REGION should fail', async function () {
+    it('REGION should NOT fail', async function () {
       const batteryDesignCapacity = 3500
       const currentChargeLevel = 5
       const deviceAgeInMonths = 3
@@ -219,7 +219,7 @@ contract('PremiumCalculator', function (accounts) {
         }
       )
 
-      assert.equal(web3.toUtf8(result), 'R')
+      assert.equal(web3.toUtf8(result), '')
     })
 
     it('WEAR_LEVEL should fail', async function () {
@@ -330,7 +330,7 @@ contract('PremiumCalculator', function (accounts) {
       const maxValue = 3000
       const coefficient = 100
 
-      await premiumCalculatorInstance.setIntervalCoefficient(type,index,insert, minValue, maxValue, coefficient)
+      await premiumCalculatorInstance.setIntervalCoefficient(type, index, insert, minValue, maxValue, coefficient)
 
       const premium = await premiumCalculatorInstance.calculatePremium(
         batteryDesignCapacity,

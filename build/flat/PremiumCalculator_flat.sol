@@ -106,6 +106,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         premium = premium.mul(100 + loading).div(100).div(uint(100)**TOTAL_COEFFICIENTS);  
     }
 
+    // return shortcut for not valid value
     function validate(
         uint _batteryDesignCapacity, 
         uint _currentChargeLevel,
@@ -117,11 +118,11 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
             view 
             returns (bytes2) {
         
-        if (coefficients[DEVICE_BRAND][_deviceBrand] == 0) {
+        if (coefficients[DEVICE_BRAND][_deviceBrand] == 0 && coefficients[DEVICE_BRAND][OTHERS] == 0) {
             return(DEVICE_BRAND);
         }
 
-        if (coefficients[REGION][_region] == 0) {
+        if (coefficients[REGION][_region] == 0 && coefficients[REGION][OTHERS] == 0) {
             return(REGION);
         }
 
