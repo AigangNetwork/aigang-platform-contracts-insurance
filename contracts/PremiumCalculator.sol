@@ -26,7 +26,7 @@ interface IPremiumCalculator {
             returns (bytes2);
     
     function isClaimable(string _batteryWearLevel
-    ) pure returns (bool);
+    ) external pure returns (bool);
 
     function getPayout(
     ) external view returns (uint);
@@ -250,7 +250,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         }
     }
 
-    function isClaimable(string _batteryWearLevel) public pure returns (bool) {      
+    function isClaimable(string _batteryWearLevel) external pure returns (bool) {      
         if(_batteryWearLevel.equal("10") 
             || _batteryWearLevel.equal("20") 
             || _batteryWearLevel.equal("30")){

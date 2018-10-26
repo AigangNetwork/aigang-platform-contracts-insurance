@@ -1,7 +1,7 @@
 var TestToken = artifacts.require('TestToken.sol')
 var PremiumCalculator = artifacts.require('./PremiumCalculator.sol')
 var Product = artifacts.require('./Product.sol')
-// var BytesHelper = artifacts.require('./utils/BytesHelper.sol')
+var BytesHelper = artifacts.require('./utils/BytesHelper.sol')
 
 let tryCatch = require('./exceptions.js').tryCatch
 let errTypes = require('./exceptions.js').errTypes
@@ -143,6 +143,316 @@ contract('Product', accounts => {
 
       assert.equal(policiesCount, 1)
     })
+
+    it('claim not set policy', async function () {
+      let policyIdBytes = web3.fromAscii('firstID')
+      //let p_owner = addresses[0]
+      let start = Date.now()
+      const claimProperties = "TEST"
+
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+
+      await tryCatch(
+        productInstance.claim(policyIdBytes, claimProperties),
+        errTypes.revert
+      )
+
+      const payoutsCount = await productInstance.policiesPayoutsCount({
+        from: owner
+      })
+
+
+    it('claim canceled policy', async function () {
+      let policyIdBytes = web3.fromAscii('firstID')
+      let start = Date.now()
+      let end = start + 100
+      let calculatedPayOut = web3.toWei(1.6, 'ether')
+      let properties = 'test 1'
+      const claimProperties = "TEST"
+
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+
+      await productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, {
+        from: owner
+      })
+
+      await productInstance.cancel(policyIdBytes, { from: owner })
+
+      await tryCatch(
+        productInstance.claim(policyIdBytes, claimProperties),
+        errTypes.revert
+      )
+
+      const payoutsCount = await productInstance.policiesPayoutsCount({
+        from: owner
+      })
+        
+      assert.equal(payoutsCount.toNumber(), 0)
+    })
+    
+    it('claim with not owner', async function () {
+      let policyIdBytes = web3.fromAscii('firstID')
+      let start = Date.now()
+      let end = start + 100
+      let calculatedPayOut = web3.toWei(1.6, 'ether')
+      let properties = 'test 1'
+      const claimProperties = "TEST"
+
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+
+      await productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, {
+        from: owner
+      })
+
+      await tryCatch(
+        productInstance.claim(policyIdBytes, claimProperties, { from: accounts[1]}),
+        errTypes.revert
+      )
+
+      const payoutsCount = await productInstance.policiesPayoutsCount({
+        from: owner
+      })
+        
+      assert.equal(payoutsCount.toNumber(), 0)
+    })
+        
+      assert.equal(payoutsCount.toNumber(), 0)
+    })
+
+    it('contract paused', async function () {
+      let policyIdBytes = web3.fromAscii('firstID')
+
+      let start = Date.now()
+      let end = start + 100
+      let calculatedPayOut = web3.toWei(1.6, 'ether')
+      let properties = 'test 1'
+
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+
+      await productInstance.pause(true)
+
+      await tryCatch(
+        productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, {
+          from: owner
+        }),
+        errTypes.revert
+      )
+
+      await productInstance.pause(false)
+      
+      await productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, {
+        from: owner
+      })
+
+      let policiesCount = await productInstance.policiesCount({
+        from: owner
+      })
+
+      assert.equal(policiesCount, 1)
+    })
+
+    it('set unpaid policy', async function () {
+      let policyIdBytes = web3.fromAscii('firstID')
+
+      let start = Date.now()
+      let end = start + 100
+      let calculatedPayOut = web3.toWei(1.6, 'ether')
+      let properties = 'test 1'
+
+      await tryCatch(
+        productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, { from: owner }), 
+        errTypes.revert
+      )
+    })
+
+    it('pay for the same policy twice', async function () {
+      let policyIdBytes = web3.fromAscii('firstID')
+      let start = Date.now()
+
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+
+      await tryCatch(
+        testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, { from: owner }), 
+        errTypes.revert
+      )
+    })
+
+    it('update policy', async function () {
+      let policyIdBytes = web3.fromAscii('firstID')
+      let start = Date.now()
+      let end = start + 100
+      let calculatedPayOut = web3.toWei(1.6, 'ether')
+      let properties = 'test 1'
+
+      let start2 = Date.now() - 10
+      let end2 = start + 10
+      let calculatedPayOut2 = web3.toWei(1.5, 'ether')
+      let isCanceled = true
+      
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+      const paymentValue2 = web3.toWei((premium+100).toString(), 'ether')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+
+      await productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, {
+        from: owner
+      })
+      
+      await productInstance.updatePolicy(policyIdBytes, owner, start2, end2, paymentValue2, calculatedPayOut2, isCanceled, {
+        from: owner
+      })
+
+      let policy = await productInstance.policies.call(policyIdBytes)
+      
+      assert.equal(owner, policy[0])
+      assert.equal(policy[1].toNumber(), start2)
+      assert.equal(policy[2].toNumber(), end2)
+      assert.equal(policy[4], isCanceled)
+      assert.equal(policy[5].toNumber(), paymentValue2)
+      assert.equal(policy[6].toNumber(), calculatedPayOut2)
+    })
+
+
+  it('update policy 2', async function () {
+    let policyIdBytes = web3.fromAscii('firstID')
+    let start = Date.now()
+    let end = start + 100
+    let calculatedPayOut = web3.toWei(1.6, 'ether')
+    let properties = 'test 1'
+
+    const properties2 = "test 2"
+    const payout = 100
+    const payoutDate = start + 10000
+    const claimProperties = "test 3"
+    
+    const premium = 300
+    const paymentValue = web3.toWei(premium.toString(), 'ether')
+
+    await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+      from: owner
+    })
+
+    await productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, {
+      from: owner
+    })
+    
+    await productInstance.updatePolicy2(policyIdBytes, properties2, payout, payoutDate, claimProperties, {
+      from: owner
+    })
+
+    policy = await productInstance.policies.call(policyIdBytes)
+    
+    assert.equal(policy[7], properties2)
+    assert.equal(policy[8].toNumber(), payout)
+    assert.equal(policy[3].toNumber(), payoutDate)
+    assert.equal(policy[9], claimProperties)
+  })
+
+    it('happy flow', async function () {
+      let policyIdBytes = web3.fromAscii('firstID')
+      //let p_owner = addresses[0]
+      let start = Date.now()
+      let end = start + 100
+      let calculatedPayOut = web3.toWei(1.6, 'ether')
+      let properties = 'test 1'
+
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+
+      await productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, {
+        from: owner
+      })
+
+      let policiesCount = await productInstance.policiesCount({
+        from: owner
+      })
+
+      assert.equal(policiesCount, 1)
+    })
+
+    it('set same policy twice', async function () {
+        let policyIdBytes = web3.fromAscii('firstID')
+        //let p_owner = addresses[0]
+        let start = Date.now()
+        let end = start + 100
+        let calculatedPayOut = web3.toWei(1.6, 'ether')
+        let properties = 'test 1'
+  
+        const premium = 300
+        const paymentValue = web3.toWei(premium.toString(), 'ether')
+  
+        await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+          from: owner
+        })
+  
+        await productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, {
+          from: owner
+        })
+
+        await tryCatch(productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, { from: owner }), errTypes.revert)
+    })
+
+    it('claim same policy twice', async function () {
+      let policyIdBytes = web3.fromAscii('firstID')
+      let start = Date.now()
+      let end = start + 100
+      let calculatedPayOut = web3.toWei(1.6, 'ether')
+      let properties = 'test 1'
+      const claimProperties = "TEST"
+
+      const premium = 300
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: owner
+      })
+
+      await productInstance.addPolicy(policyIdBytes, start, end, calculatedPayOut, properties, {
+        from: owner
+      })
+
+      await productInstance.claim(policyIdBytes, claimProperties)
+
+      await tryCatch(productInstance.claim(policyIdBytes, claimProperties), errTypes.revert)
+
+      const payoutsCount = await productInstance.policiesPayoutsCount({
+        from: owner
+      })
+        
+      assert.equal(payoutsCount.toNumber(), 1)
+    })
   })
 
   describe('#payment', async function () {
@@ -157,7 +467,7 @@ contract('Product', accounts => {
         from: owner
       })
 
-      await testTokenInstance.transfer(owner, web3.toWei(2000))
+      await testTokenInstance.transfer(accounts[2], web3.toWei(2000))
     })
 
     it('happy flow', async function () {
@@ -198,5 +508,49 @@ contract('Product', accounts => {
         assert(invalidJump, 'Expected revert')
       }
     })
+
+    it('withdraw Tokens', async function () {
+      const premium = 2000
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+      let policyIdBytes = web3.fromAscii('thirdID')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: accounts[2]
+      })
+
+      await productInstance.transferOwnership(accounts[2], { from: owner })
+
+      await productInstance.withdrawTokens(paymentValue, testTokenInstance.contract.address, { from: accounts[2] })
+
+      const balance = await testTokenInstance.balanceOf(accounts[2])
+
+      assert.equal(web3.fromWei(balance), 2000)
+    })
+
   })
+
+  describe('#utils', async function () {
+    beforeEach(async function () {
+      premiumCalculatorInstance = await PremiumCalculator.new()
+      productInstance = await Product.new()
+      now = Date.now()
+      endDate = now + 6000
+
+      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
+        from: owner
+      })
+    })
+
+    it('update premium calculator', async function () {
+      const newPremiumCalculator = await PremiumCalculator.new()
+      
+      await productInstance.updatePremiumCalculator(newPremiumCalculator.contract.address)
+
+      const premiumCalculatorAddress = await productInstance.premiumCalculator()
+
+      assert.equal(premiumCalculatorAddress, newPremiumCalculator.contract.address)
+    })
+
+  })
+
 })
