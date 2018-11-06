@@ -11,7 +11,7 @@ contract Owned {
     }
 
     modifier onlyOwner {
-        require(msg.sender == owner || msg.sender == newOwner);
+        require(msg.sender == owner || (msg.sender == newOwner && newOwner != address(0)));
         _;
     }
 
