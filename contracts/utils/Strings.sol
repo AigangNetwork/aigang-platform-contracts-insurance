@@ -1,7 +1,14 @@
 pragma solidity ^0.4.23;
 
 library Strings {
-    function equal(string memory _a, string memory _b) pure internal returns (bool) {
+    function equal(string memory _a, string memory _b) internal pure returns (bool) {
+        if(bytes(_a).length != bytes(_b).length) {
+            return false;
+        } else {
+            return keccak256(_a) == keccak256(_b);
+        }
+    }
+    function equalByBytes(string memory _a, string memory _b) internal pure returns (bool) {
         bytes memory a = bytes(_a);
         bytes memory b = bytes(_b);
        

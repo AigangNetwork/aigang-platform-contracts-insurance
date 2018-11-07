@@ -34,10 +34,12 @@ contract Owned {
     }
 
     function transferOwnership(address _newOwner) public onlyOwnerOrSuperOwner {
+        emit OwnershipTransferred(owner, _newOwner);
         owner = _newOwner;
     }
 
     function transferSuperOwnership(address _newOwner) public onlySuperOwner {
+        emit OwnershipTransferred(superOwner, _newOwner);
         superOwner = _newOwner;
     }
 
