@@ -3,6 +3,7 @@ pragma solidity ^0.4.23;
 import "./utils/OwnedWithExecutor.sol";
 import "./utils/SafeMath.sol";
 import "./interfaces/IERC20.sol";
+import "./interfaces/IPrizeCalculator.sol";
 
 // BUIDL IN PROGRESS
 
@@ -13,6 +14,7 @@ contract Pools is Owned {
     event PoolAdded(bytes32 _destination);
     event ContributionAdded(bytes32 _poolId, bytes32 _contributionId);
     event PoolStatusChange(PoolStatus _oldStatus, PoolStatus _newStatus);
+    event Paidout(bytes32 _poolId, bytes32 _contributionId);
     event Withdraw(uint _amount);
 
     uint8 public constant version = 1;
@@ -28,13 +30,16 @@ contract Pools is Owned {
         PoolStatus status;
         uint amountLimit;
         uint amountCollected;
+        uint amountDistributing;
+        uint paidout;
         mapping(bytes32 => Contribution) contributions;
+        address prizeCalculator;
     }
     
     struct Contribution {  
         address owner;
         uint amount;
-        uint payout;
+        uint paidout;
     }
     
     enum PoolStatus {
@@ -65,7 +70,8 @@ contract Pools is Owned {
         emit Initialize(_token);
     }
 
-    function addPool(bytes32 _id, address _destination, uint _contributionStartUtc, uint _contributionEndUtc, uint _amountLimit) 
+    function addPool(bytes32 _id, 
+        address _destination, uint _contributionStartUtc, uint _contributionEndUtc, uint _amountLimit, address _prizeCalculator) 
         external 
         onlyOwnerOrSuperOwner 
         contractNotPaused {
@@ -75,6 +81,7 @@ contract Pools is Owned {
         pools[_id].destination = _destination;
         pools[_id].status = PoolStatus.Active;
         pools[_id].amountLimit = _amountLimit;
+        pools[_id].prizeCalculator = _prizeCalculator;
         
         emit PoolAdded(_id);
     }
@@ -82,6 +89,11 @@ contract Pools is Owned {
     function setPoolStatus(bytes32 _poolId, PoolStatus _status) public onlyOwnerOrSuperOwner {
         emit PoolStatusChange(pools[_poolId].status, _status);
         pools[_poolId].status = _status;
+    }
+    
+     function setPoolDistributing(bytes32 _poolId, uint _amountDistributing) external onlyOwnerOrSuperOwner {
+        setPoolStatus(_poolId, PoolStatus.Distributing);
+        pools[_poolId].amountDistributing = _amountDistributing;
     }
     
     // TODO refactor to token approveCallback
@@ -105,7 +117,27 @@ contract Pools is Owned {
         setPoolStatus(_poolId,PoolStatus.Funded);
     }
     
-    // TODO: distribute funds to 
+     function payout(bytes32 _poolId, bytes32 _contributionId) public contractNotPaused {
+        require(pools[_poolId].status == PoolStatus.Distributing, "Pool should be Distributing");
+        require(pools[_poolId].amountDistributing > pools[_poolId].paidout, "Pool should be not empty");
+        
+
+        Contribution storage con = pools[_poolId].contributions[_contributionId];
+        assert(con.paidout == 0);
+        
+        IPrizeCalculator calculator = IPrizeCalculator(pools[_poolId].prizeCalculator);
+    
+        uint winAmount = calculator.calculatePrizeAmount( // TODO test old prize calculator
+            pools[_poolId].amountDistributing,
+            pools[_poolId].amountDistributing,  
+            con.amount
+        );
+        assert(winAmount > 0);
+        con.paidout = winAmount;
+        pools[_poolId].paidout = pools[_poolId].paidout.add(winAmount);
+        assert(IERC20(token).transfer(con.owner, winAmount));
+        emit Paidout(_poolId, _contributionId);
+    }
     
     
     // ////////
