@@ -30,7 +30,7 @@ contract('Product', accounts => {
           from: owner
         })
 
-        await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
+        await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, 0, {
           from: owner
         })
 

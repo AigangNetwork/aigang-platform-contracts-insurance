@@ -46,12 +46,17 @@ contract Pools is Owned {
         NotSet,       // 0
         Active,       // 1
         Distributing, // 2
-        Funded,       // 3
+        Funded,       // 3 
         Paused        // 4
     }  
 
     modifier contractNotPaused() {
         require(paused == false, "Contract is paused");
+        _;
+    }
+
+    modifier senderIsToken() {
+        require(msg.sender == address(token));
         _;
     }
     
@@ -127,11 +132,12 @@ contract Pools is Owned {
         
         IPrizeCalculator calculator = IPrizeCalculator(pools[_poolId].prizeCalculator);
     
-        uint winAmount = calculator.calculatePrizeAmount( // TODO test old prize calculator
+        uint winAmount = calculator.calculatePrizeAmount(
             pools[_poolId].amountDistributing,
-            pools[_poolId].amountDistributing,  
+            pools[_poolId].amountCollected,  
             con.amount
         );
+      
         assert(winAmount > 0);
         con.paidout = winAmount;
         pools[_poolId].paidout = pools[_poolId].paidout.add(winAmount);
@@ -161,5 +167,4 @@ contract Pools is Owned {
     function pause(bool _paused) external onlyOwnerOrSuperOwner {
         paused = _paused;
     }
-   
 }

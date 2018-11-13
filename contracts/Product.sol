@@ -4,7 +4,6 @@ import "./utils/OwnedWithExecutor.sol";
 import "./utils/SafeMath.sol";
 import "./utils/BytesHelper.sol";
 import "./interfaces/IERC20.sol";
-//import "./PremiumCalculator.sol";
 
 interface IProduct {
     function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayout, string _properties) external;
@@ -21,8 +20,9 @@ contract Product is Owned, IProduct {
     event PremiumCalculatorChange(address _old, address _new);
     event PaymentReceived(bytes32 indexed _policyId, uint _amount);
     event PolicyUpdatedManualy(bytes32 indexed _policyId);
+    event WithdrawToPool(uint _amount);
+    event Withdraw(uint _amount);
 
-    // TODO: limit policies or payouts amount or others limits in code not contracts.    
     struct Policy {
         address owner;
         uint utcStart;
@@ -39,6 +39,7 @@ contract Product is Owned, IProduct {
     
     address public token;
     address public premiumCalculator;
+    address public pool;
     uint public utcProductStartDate;
     uint public utcProductEndDate;
 
@@ -70,11 +71,20 @@ contract Product is Owned, IProduct {
         _;
     }
    
-    function initialize(address _premiumCalculator, address _token, uint _utcProductStartDate, uint _utcProductEndDate) external onlyOwnerOrSuperOwner {
+    function initialize(
+        address _premiumCalculator, 
+        address _token, 
+        uint _utcProductStartDate, 
+        uint _utcProductEndDate,
+        address _pool) 
+            external 
+            onlyOwnerOrSuperOwner {
+
         premiumCalculator = _premiumCalculator;
         token = _token;
         utcProductStartDate = _utcProductStartDate; 
         utcProductEndDate = _utcProductEndDate;
+        pool = _pool;
         paused = false;
     }
 
@@ -152,6 +162,14 @@ contract Product is Owned, IProduct {
         premiumCalculator = _newCalculator;
     }      
 
+    function transferToPool() public onlyOwnerOrSuperOwner {
+        require(pool != address(0), 'Pool should be set');
+        uint balance = tokenBalance();
+        paused = true;
+        assert(IERC20(token).transfer(pool, balance));
+        emit WithdrawToPool(balance);
+    }
+
     //////////
     // Safety Methods
     //////////
@@ -202,11 +220,14 @@ contract Product is Owned, IProduct {
     }
 
     function withdrawETH() external onlyOwnerOrSuperOwner {
-        owner.transfer(address(this).balance);
+        uint balance = address(this).balance;
+        owner.transfer(balance);
+        emit Withdraw(balance);
     }
 
     function withdrawTokens(uint _amount, address _token) external onlyOwnerOrSuperOwner {
         IERC20(_token).transfer(owner, _amount);
+        emit Withdraw(_amount);
     }
 
     function pause(bool _paused) external onlyOwnerOrSuperOwner {

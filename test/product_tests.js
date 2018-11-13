@@ -15,6 +15,7 @@ contract('Product', accounts => {
   let owner = accounts[0]
   let executor = accounts[1]
   let nonOwner = accounts[2]
+  let pool = accounts[3]
   let addresses = [
     '0xD7dFCEECe5bb82F397f4A9FD7fC642b2efB1F565',
     '0x501AC3B461e7517D07dCB5492679Cc7521AadD42',
@@ -48,7 +49,7 @@ contract('Product', accounts => {
     })
 
     it('happy flow', async function () {
-      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
+      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, 0, {
         from: owner
       })
 
@@ -76,7 +77,7 @@ contract('Product', accounts => {
 
     it('throws than not owner', async function () {
       await tryCatch(
-        productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
+        productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, 0, {
           from: nonOwner
         }),
         errTypes.revert
@@ -113,7 +114,7 @@ contract('Product', accounts => {
       await premiumCalculatorInstance.initialize(basePremium, loading, payout, {
         from: owner
       })
-      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
+      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, 0, {
         from: owner
       })
     })
@@ -463,7 +464,7 @@ contract('Product', accounts => {
       now = Date.now()
       endDate = now + 6000
 
-      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
+      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, pool, {
         from: owner
       })
 
@@ -475,7 +476,7 @@ contract('Product', accounts => {
       const paymentValue = web3.toWei(premium.toString(), 'ether')
       let policyIdBytes = web3.fromAscii('firstID')
 
-      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
+      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, 0, {
         from: owner
       })
 
@@ -527,6 +528,22 @@ contract('Product', accounts => {
       assert.equal(web3.fromWei(balance), 2000)
     })
 
+    it('transferToPool', async function () {
+      const premium = 2000
+      const paymentValue = web3.toWei(premium.toString(), 'ether')
+      let policyIdBytes = web3.fromAscii('thirdID')
+
+      await testTokenInstance.approveAndCall(productInstance.contract.address, paymentValue, policyIdBytes, {
+        from: accounts[2]
+      })
+    
+      await productInstance.transferToPool({ from: owner })
+
+      const balance = await testTokenInstance.balanceOf(pool)
+
+      assert.equal(web3.fromWei(balance), 2000)
+    })
+
   })
 
   describe('#utils', async function () {
@@ -536,7 +553,7 @@ contract('Product', accounts => {
       now = Date.now()
       endDate = now + 6000
 
-      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, {
+      await productInstance.initialize(premiumCalculatorInstance.address, testTokenInstance.address, now, endDate, 0, {
         from: owner
       })
     })
