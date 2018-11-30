@@ -1,8 +1,8 @@
 pragma solidity ^0.4.13;
 
 interface IProduct {
-    function addPolicy(bytes32 _id, uint32 _utcStart, uint32 _utcEnd, uint _calculatedPayout, string _properties) public;
-    function claim(bytes32 _policyId, string _properties) public;
+    function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayout, string _properties) external;
+    function claim(bytes32 _policyId, string _properties) external;
 }
 
 interface IERC20 {
@@ -26,12 +26,12 @@ library BytesHelper {
 contract Owned {
     address public owner;
     address public executor;
-    address public newOwner;
+    address public superOwner;
   
     event OwnershipTransferred(address indexed _from, address indexed _to);
-    event ExecutorTransferred(address indexed _from, address indexed _to);
 
     constructor() public {
+        superOwner = msg.sender;
         owner = msg.sender;
         executor = msg.sender;
     }
@@ -41,25 +41,34 @@ contract Owned {
         _;
     }
 
-    modifier onlyAllowed {
-        require(msg.sender == owner || msg.sender == executor, "Not allowed");
+    modifier onlySuperOwner {
+        require(msg.sender == superOwner, "User is not owner");
         _;
     }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
+    modifier onlyOwnerOrSuperOwner {
+        require(msg.sender == owner || msg.sender == superOwner, "User is not owner");
+        _;
     }
 
-    function transferExecutorOwnership(address _newExecutor) public onlyOwner {
-        emit ExecutorTransferred(executor, _newExecutor);
+    modifier onlyAllowed {
+        require(msg.sender == owner || msg.sender == executor || msg.sender == superOwner, "Not allowed");
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwnerOrSuperOwner {
+        emit OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
+    }
+
+    function transferSuperOwnership(address _newOwner) public onlySuperOwner {
+        emit OwnershipTransferred(superOwner, _newOwner);
+        superOwner = _newOwner;
+    }
+
+    function transferExecutorOwnership(address _newExecutor) public onlyOwnerOrSuperOwner {
+        emit OwnershipTransferred(executor, _newExecutor);
         executor = _newExecutor;
-    }
-
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
     }
 }
 
@@ -73,13 +82,14 @@ contract Product is Owned, IProduct {
     event PremiumCalculatorChange(address _old, address _new);
     event PaymentReceived(bytes32 indexed _policyId, uint _amount);
     event PolicyUpdatedManualy(bytes32 indexed _policyId);
+    event WithdrawToPool(uint _amount);
+    event Withdraw(uint _amount);
 
-    // TODO: limit policies or payouts amoun or others limits in code not contracts.    
     struct Policy {
         address owner;
-        uint32 utcStart;
-        uint32 utcEnd;
-        uint32 utcPayoutDate;
+        uint utcStart;
+        uint utcEnd;
+        uint utcPayoutDate;
         bool isCanceled;
         uint premium;
         uint calculatedPayout;
@@ -91,6 +101,7 @@ contract Product is Owned, IProduct {
     
     address public token;
     address public premiumCalculator;
+    address public pool;
     uint public utcProductStartDate;
     uint public utcProductEndDate;
 
@@ -113,23 +124,34 @@ contract Product is Owned, IProduct {
         _;
     }
 
-     modifier policyValidForPayout(bytes32 _policyId) {
+    modifier policyValidForPayout(bytes32 _policyId) {
         require(policies[_policyId].owner != address(0), "Owner is not valid");       
         require(policies[_policyId].payout == 0, "Payout already done");
         require(policies[_policyId].isCanceled == false, "Policy already canceled");
+        require(policies[_policyId].calculatedPayout != 0, "Policy is not set");
+        require(policies[_policyId].utcEnd > now, "Policy has ended");
         _;
     }
    
-    function initialize(address _premiumCalculator, address _token, uint _utcProductStartDate, uint _utcProductEndDate) external onlyOwner {
+    function initialize(
+        address _premiumCalculator, 
+        address _token, 
+        uint _utcProductStartDate, 
+        uint _utcProductEndDate,
+        address _pool) 
+            external 
+            onlyOwnerOrSuperOwner {
+
         premiumCalculator = _premiumCalculator;
         token = _token;
         utcProductStartDate = _utcProductStartDate; 
         utcProductEndDate = _utcProductEndDate;
+        pool = _pool;
         paused = false;
     }
 
-    function addPolicy(bytes32 _id, uint32 _utcStart, uint32 _utcEnd, uint _calculatedPayout, string _properties) 
-            public 
+    function addPolicy(bytes32 _id, uint _utcStart, uint _utcEnd, uint _calculatedPayout, string _properties) 
+            external 
             onlyAllowed 
             notPaused {
         require(policies[_id].premium > 0, "Policy is not payed");
@@ -160,7 +182,7 @@ contract Product is Owned, IProduct {
         require(policies[policyId].premium == 0, "policy is paid and laready exist");
 
         // Transfer tokens from sender to this contract
-        require(IERC20(token).transferFrom(_from, address(this), _amountOfTokens), "Tokens transfer failed.");
+        require(IERC20(_token).transferFrom(_from, address(this), _amountOfTokens), "Tokens transfer failed.");
    
         policies[policyId].premium = _amountOfTokens;
         policies[policyId].owner = _from;
@@ -168,14 +190,14 @@ contract Product is Owned, IProduct {
         emit PaymentReceived(policyId, _amountOfTokens);
     }
           
-    function claim(bytes32 _policyId, string _properties) public 
+    function claim(bytes32 _policyId, string _properties) external 
             onlyAllowed 
             notPaused
             policyValidForPayout(_policyId) { 
       
         require(IERC20(token).balanceOf(this) >= policies[_policyId].calculatedPayout, "Contract balance is to low");
 
-        policies[_policyId].utcPayoutDate = uint32(now);
+        policies[_policyId].utcPayoutDate = uint(now);
         policies[_policyId].payout = policies[_policyId].calculatedPayout;
         policies[_policyId].claimProperties = _properties;
 
@@ -197,10 +219,18 @@ contract Product is Owned, IProduct {
         emit Cancel(_policyId, policies[_policyId].payout);
     }
 
-    function updatePremiumCalculator(address _newCalculator) public onlyOwner {
+    function updatePremiumCalculator(address _newCalculator) public onlyOwnerOrSuperOwner {
         emit PremiumCalculatorChange(premiumCalculator, _newCalculator);
         premiumCalculator = _newCalculator;
     }      
+
+    function transferToPool() public onlyOwnerOrSuperOwner {
+        require(pool != address(0), 'Pool should be set');
+        uint balance = tokenBalance();
+        paused = true;
+        assert(IERC20(token).transfer(pool, balance));
+        emit WithdrawToPool(balance);
+    }
 
     //////////
     // Safety Methods
@@ -212,13 +242,13 @@ contract Product is Owned, IProduct {
     function updatePolicy(
         bytes32 _policyId,
         address _owner,
-        uint32 _utcStart,
-        uint32 _utcEnd,
+        uint _utcStart,
+        uint _utcEnd,
         uint _premium,
         uint _calculatedPayout,
         bool _isCanceled) 
             external 
-            onlyOwner {
+            onlyOwnerOrSuperOwner {
         
         policies[_policyId].owner = _owner;
         policies[_policyId].utcStart = _utcStart;
@@ -234,10 +264,10 @@ contract Product is Owned, IProduct {
         bytes32 _policyId,
         string _properties,
         uint _payout,
-        uint32 _utcPayoutDate,
+        uint _utcPayoutDate,
         string _claimProperties) 
             external 
-            onlyOwner {
+            onlyOwnerOrSuperOwner {
         
         policies[_policyId].properties = _properties;
         policies[_policyId].payout = _payout;
@@ -247,20 +277,22 @@ contract Product is Owned, IProduct {
         emit PolicyUpdatedManualy(_policyId);
     }
 
-
-   function tokenBalance() public view returns (uint) {
-         return IERC20(token).balanceOf(this);
+    function tokenBalance() public view returns (uint) {
+        return IERC20(token).balanceOf(this);
     }
 
-    function withdrawETH() external onlyOwner {
-        owner.transfer(address(this).balance);
+    function withdrawETH() external onlyOwnerOrSuperOwner {
+        uint balance = address(this).balance;
+        owner.transfer(balance);
+        emit Withdraw(balance);
     }
 
-    function withdrawTokens(uint _amount, address _token) external onlyOwner {
+    function withdrawTokens(uint _amount, address _token) external onlyOwnerOrSuperOwner {
         IERC20(_token).transfer(owner, _amount);
+        emit Withdraw(_amount);
     }
 
-    function pause(bool _paused) external onlyOwner {
+    function pause(bool _paused) external onlyOwnerOrSuperOwner {
         paused = _paused;
     }
 }

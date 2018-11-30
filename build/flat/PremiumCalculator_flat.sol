@@ -22,7 +22,7 @@ interface IPremiumCalculator {
             returns (bytes2);
     
     function isClaimable(string _batteryWearLevel
-    ) pure returns (bool);
+    ) external pure returns (bool);
 
     function getPayout(
     ) external view returns (uint);
@@ -39,15 +39,16 @@ contract Owned {
     }
 
     modifier onlyOwner {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "Only owner is allowed");
         _;
     }
 
     function transferOwnership(address _newOwner) public onlyOwner {
         newOwner = _newOwner;
     }
+    
     function acceptOwnership() public {
-        require(msg.sender == newOwner);
+        require(msg.sender == newOwner && msg.sender != address(0), "Only newOwner can accept");
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
         newOwner = address(0);
@@ -271,7 +272,7 @@ contract PremiumCalculator is Owned, IPremiumCalculator {
         }
     }
 
-    function isClaimable(string _batteryWearLevel) public pure returns (bool) {      
+    function isClaimable(string _batteryWearLevel) external pure returns (bool) {      
         if(_batteryWearLevel.equal("10") 
             || _batteryWearLevel.equal("20") 
             || _batteryWearLevel.equal("30")){
@@ -360,7 +361,14 @@ library SafeMath {
 }
 
 library Strings {
-    function equal(string memory _a, string memory _b) pure internal returns (bool) {
+    function equal(string memory _a, string memory _b) internal pure returns (bool) {
+        if(bytes(_a).length != bytes(_b).length) {
+            return false;
+        } else {
+            return keccak256(_a) == keccak256(_b);
+        }
+    }
+    function equalByBytes(string memory _a, string memory _b) internal pure returns (bool) {
         bytes memory a = bytes(_a);
         bytes memory b = bytes(_b);
        
