@@ -90,13 +90,13 @@ contract Product is Owned, IProduct {
         uint utcStart;
         uint utcEnd;
         uint utcPayoutDate;
-        bool isCanceled;
         uint premium;
         uint calculatedPayout;
         string properties;
         // claim
         uint payout;
         string claimProperties;
+        bool isCanceled;
     }
     
     address public token;
